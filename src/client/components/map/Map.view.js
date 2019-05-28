@@ -21,6 +21,9 @@ export default class MapView extends View {
       zoom: 7,
     });
 
+    this.map.dragRotate.disable();
+    this.map.touchZoomRotate.disable();
+
     this.map.on('load', () => {
       this.map.addLayer({
         'id': 'districtLayer',
