@@ -1,0 +1,40 @@
+html {
+  height: 100%;
+}
+
+body {
+  display: block;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+#nameplate {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 40px;
+  line-height: 40px;
+  font-family: sans-serif;
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2);
+  padding-left: 40px;
+  font-size: 24px;
+  color: blue;
+  z-index: 2;
+  vertical-align: middle;
+  background-color: white;
+  user-select: none;
+}
+
+#map {
+  display: block;
+  position: absolute;
+  top: 40px;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 40px);
+  z-index: 0;
+  background-color: gainsboro;
+}
