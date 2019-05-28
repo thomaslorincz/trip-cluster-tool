@@ -35,14 +35,53 @@ export default class MapView extends View {
           'fill-outline-color': 'rgba(0,0,255,0.2)',
         },
       });
-    });
 
-    this.map.on('mouseenter', 'districtLayer', () => {
-      this.map.getCanvas().style.cursor = 'pointer';
-    });
+      this.map.addLayer({
+        'id': 'districtLayerSelected',
+        'source': {
+          type: 'vector',
+          url: 'mapbox://thomaslorincz.7qoflzqc',
+        },
+        'source-layer': 'district1669-5c4o7a',
+        'type': 'line',
+        'feature_type': 'fill',
+        'paint': {
+          'line-width': 6,
+          'line-color': 'black',
+        },
+        'filter': ['in', 'District', ''],
+      });
 
-    this.map.on('mouseleave', 'districtLayer', () => {
-      this.map.getCanvas().style.cursor = '';
+      this.map.on('click', 'districtLayer', (e) => {
+        const features = this.map.queryRenderedFeatures(
+            e.point,
+            'districtLayer'
+        );
+        if (features.length > 0) {
+          const thisLayerFeatures = features.filter((d) => {
+            return d.layer.id === 'districtLayer';
+          });
+          const feature = thisLayerFeatures[0];
+          this.container.dispatchEvent(new CustomEvent('featureClicked', {
+            detail: feature.properties['District'],
+          }));
+        }
+      });
+
+      this.map.on('mouseenter', 'districtLayer', () => {
+        this.map.getCanvas().style.cursor = 'pointer';
+      });
+
+      this.map.on('mouseleave', 'districtLayer', () => {
+        this.map.getCanvas().style.cursor = '';
+      });
     });
+  }
+
+  /**
+   * @param {number} districtId
+   */
+  updateSelected(districtId) {
+    this.map.setFilter('districtLayerSelected', ['in', 'District', districtId]);
   }
 }

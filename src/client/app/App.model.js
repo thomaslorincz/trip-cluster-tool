@@ -7,5 +7,17 @@ export default class AppModel extends Model {
   // eslint-disable-next-line
   constructor() {
     super();
+
+    this.selected = null;
+  }
+
+  /**
+   * @param {number} districtId
+   */
+  updateSelected(districtId) {
+    this.selected = districtId;
+    document.dispatchEvent(new CustomEvent('selectedUpdated', {
+      detail: this.selected,
+    }));
   }
 }

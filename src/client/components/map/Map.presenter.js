@@ -11,5 +11,13 @@ export default class MapPresenter extends Presenter {
    */
   constructor(model, view) {
     super(model, view);
+
+    document.addEventListener('selectedUpdated', (event) => {
+      this.view.updateSelected(event.detail);
+    });
+
+    this.view.container.addEventListener('featureClicked', (event) => {
+      this.model.updateSelected(event.detail);
+    });
   }
 }
