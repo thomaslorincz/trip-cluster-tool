@@ -40,7 +40,7 @@ body {
 }
 
 #control-panel {
-  display: inline-flex;
+  display: inline-block;
   position: relative;
   width: 400px;
   height: 100%;
@@ -50,9 +50,107 @@ body {
 }
 
 #map {
-  display: inline-flex;
+  display: inline-block;
   position: relative;
+  flex-direction: column;
   width: calc(100% - 400px);
   height: 100%;
   z-index: 0;
+}
+
+.control {
+  display: block;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  font-family: sans-serif;
+  padding: 20px;
+}
+
+.title {
+  font-weight: bold;
+}
+
+#auto-iterate {
+  display: block;
+  position: relative;
+}
+
+#auto-iterate-label {
+  display: inline-block;
+  position: relative;
+}
+
+#auto-iterate-switch {
+  display: inline-block;
+  position: relative;
+  width: 48px;
+  height: 18px;
+  border-radius: 18px;
+  background-color: gainsboro;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 250ms ease, background-color 250ms ease;
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2);
+}
+
+#auto-iterate-switch.enabled {
+  background-color: blue;
+}
+
+#auto-iterate-switch:hover {
+  opacity: 1;
+}
+
+#auto-iterate-switch-slider {
+  display: inline-block;
+  position: absolute;
+  contain: strict;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 18px;
+  background-color: white;
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2);
+  transition: left 250ms ease;
+}
+
+#auto-iterate-switch.enabled > #auto-iterate-switch-slider {
+  left: 30px;
+}
+
+#cluster-slider {
+  -webkit-appearance: none;
+  height: 15px;
+  border-radius: 15px;
+  background: gainsboro;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 250ms ease;
+  cursor: pointer;
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2);
+}
+
+#cluster-slider:hover {
+  opacity: 1;
+}
+
+#cluster-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: blue;
+  cursor: pointer;
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2);
+}
+
+#cluster-slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: blue;
+  cursor: pointer;
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2);
 }

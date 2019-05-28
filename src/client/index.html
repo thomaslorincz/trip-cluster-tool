@@ -8,7 +8,54 @@
 <body>
 <div id="nameplate">Trip Cluster Tool</div>
 <div id="content">
-  <div id="control-panel"></div>
+  <div id="control-panel">
+    <div class="control">
+      <div class="title">Selected</div>
+      <div id="selected-geography">Nothing Selected</div>
+    </div>
+    <div class="control">
+      <div class="title">Iteration</div>
+      <div id="iteration-number">0</div>
+      <button id="next-iteration">Next Iteration</button>
+      <div id="auto-iterate">
+        <div id="auto-iterate-label">Auto-Iterate:</div>
+        <div id="auto-iterate-switch">
+          <div id="auto-iterate-switch-slider"></div>
+        </div>
+      </div>
+    </div>
+    <div class="control">
+      <div class="title">Number of Clusters</div>
+      <div id="cluster-number">30</div>
+      <input type="range" id="cluster-slider" value="30" min="5" max="100">
+      <button id="run-again-button">Run Again</button>
+    </div>
+    <div class="control">
+      <div class="title">Dataset</div>
+      <input type="radio" id="dataset-total" value="total" name="dataset" checked>
+      <label for="dataset-total">Total</label>
+      <br>
+      <input type="radio" id="dataset-transit" value="transit" name="dataset" >
+      <label for="dataset-transit">Transit</label>
+    </div>
+    <div class="control">
+      <div class="title">Trip Purpose</div>
+      <input type="radio" id="purpose-work" value="work" name="purpose" checked>
+      <label for="purpose-work">Work</label>
+      <br>
+      <input type="radio" id="purpose-other" value="other" name="purpose">
+      <label for="purpose-other">Other</label>
+      <br>
+      <input type="radio" id="purpose-pse-to-school" value="pse-to-school" name="purpose">
+      <label for="purpose-pse-to-school">PSE to School</label>
+      <br>
+      <input type="radio" id="purpose-other-to-school" value="other-to-school" name="purpose">
+      <label for="purpose-other-to-school">Other to School</label>
+      <br>
+      <input type="radio" id="purpose-work-and-school" value="work-and-school" name="purpose">
+      <label for="purpose-work-and-school">Work and School</label>
+    </div>
+  </div>
   <div id="map"></div>
 </div>
 </body>
