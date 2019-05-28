@@ -16,7 +16,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "express": "^4.17.1",
-    "mapbox": "^1.0.0-beta10"
+    "mapbox-gl": "^1.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.4.5",
