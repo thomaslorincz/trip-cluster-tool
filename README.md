@@ -1,4 +1,4 @@
-# Trips Cluster Tool
+# Trip Cluster Tool
 ## Install
 ```
 npm install
