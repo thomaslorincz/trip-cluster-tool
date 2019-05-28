@@ -28,13 +28,31 @@ body {
   user-select: none;
 }
 
-#map {
-  display: block;
+#content {
+  display: flex;
   position: absolute;
+  flex-direction: row;
   top: 40px;
   left: 0;
   width: 100%;
   height: calc(100% - 40px);
-  z-index: 0;
   background-color: gainsboro;
+}
+
+#control-panel {
+  display: inline-flex;
+  position: relative;
+  width: 400px;
+  height: 100%;
+  background-color: white;
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+#map {
+  display: inline-flex;
+  position: relative;
+  width: calc(100% - 400px);
+  height: 100%;
+  z-index: 0;
 }
