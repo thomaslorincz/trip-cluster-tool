@@ -1,4 +1,7 @@
 import Model from '../superclasses/Model';
+import totalDataPath from '../../../data/result_total.csv';
+import transitDataPath from '../../../data/result_transit.csv';
+import * as d3 from 'd3';
 
 /**
  * Model that stores and controls the app's data and state.
@@ -7,6 +10,8 @@ export default class AppModel extends Model {
   // eslint-disable-next-line
   constructor() {
     super();
+
+    this.dataLoaded = false;
 
     this.selected = null;
 
@@ -18,6 +23,20 @@ export default class AppModel extends Model {
       dataset: 'total',
       purpose: 'work',
     };
+
+    this.totalData = null;
+    this.transitData = null;
+
+    Promise.all([
+      d3.csv(totalDataPath),
+      d3.csv(transitDataPath),
+    ]).then(([totalData, transitData]) => {
+      this.totalData = totalData;
+      this.transitData = transitData;
+      this.dataLoaded = true;
+    }).catch((error) => {
+      console.log(error);
+    });
   }
 
   /**
