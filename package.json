@@ -15,6 +15,7 @@
   "author": "City of Edmonton - Urban Analysis",
   "license": "UNLICENSED",
   "dependencies": {
+    "@babel/polyfill": "^7.4.4",
     "d3": "^5.9.2",
     "express": "^4.17.1",
     "mapbox-gl": "^1.0.0"

@@ -1,6 +1,7 @@
 import AppModel from './app/App.model';
 import AppPresenter from './app/App.presenter';
 import './style.css';
+import '@babel/polyfill';
 
 // Needed for Hot Module Replacement
 if (typeof(module.hot) !== 'undefined') {
