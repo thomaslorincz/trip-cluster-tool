@@ -266,10 +266,21 @@ export default class AppModel extends Model {
    * @param {[]} centroid
    */
   redrawClusters(centroid) {
+    let minValue = Number.MAX_VALUE;
+    let maxValue = 0;
+    for (let i = 0; i < centroid.length; i++) {
+      maxValue = Math.max(centroid[i][4], maxValue);
+      minValue = Math.min(centroid[i][4], minValue);
+    }
+
     document.dispatchEvent(new CustomEvent('removeFlowLines'));
     for (let j = 0; j < centroid.length; j++) {
       document.dispatchEvent(new CustomEvent('addFlowLine', {
-        detail: centroid[j],
+        detail: {
+          line: centroid[j],
+          min: minValue,
+          max: maxValue,
+        },
       }));
     }
   }

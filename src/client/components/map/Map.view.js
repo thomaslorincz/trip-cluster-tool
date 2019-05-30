@@ -98,24 +98,26 @@ export default class MapView extends View {
   }
 
   /**
-   * @param {[]} lineData
+   * @param {[]} line
+   * @param {number} min The minimum magnitude (used for line styling)
+   * @param {number} max The maximum magnitude (used for line styling)
    */
-  addFlowLine(lineData) {
-    const lineWidth = Math.max(lineData[4] / 100, 1);
+  addFlowLine({line, min, max}) {
+    const origin = proj4('EPSG:3776', 'EPSG:4326', [line[0], line[1]]);
+    const dest = proj4('EPSG:3776', 'EPSG:4326', [line[2], line[3]]);
 
-    const origin = proj4('EPSG:3776', 'EPSG:4326', [lineData[0], lineData[1]]);
-    const dest = proj4('EPSG:3776', 'EPSG:4326', [lineData[2], lineData[3]]);
-
-    this.lineLayers.push(lineData[5]);
+    this.lineLayers.push(line[5]);
 
     this.map.addLayer({
-      'id': lineData[5],
+      'id': line[5],
       'type': 'line',
       'source': {
         'type': 'geojson',
         'data': {
           'type': 'Feature',
-          'properties': {},
+          'properties': {
+            'magnitude': line[4],
+          },
           'geometry': {
             'type': 'LineString',
             'coordinates': [origin, dest],
@@ -123,12 +125,15 @@ export default class MapView extends View {
         },
       },
       'paint': {
-        'line-color': '#ff0000',
+        'line-color': [
+          'interpolate', ['linear'], ['get', 'magnitude'],
+          min, '#ff7f7f',
+          max, '#ff0000',
+        ],
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
-          7, lineWidth,
+          7, 10,
         ],
-        'line-opacity': 0.7,
       },
     });
   }
