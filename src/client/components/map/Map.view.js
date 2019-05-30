@@ -136,6 +136,18 @@ export default class MapView extends View {
         ],
       },
     });
+    const popup = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+    });
+    this.map.on('mouseenter', line[5], (e) =>{
+      popup.setLngLat(e.lngLat)
+          .setHTML('Number of Trips: ' + line[4])
+          .addTo(this.map);
+    });
+    this.map.on('mouseleave', line[5], () =>{
+      popup.remove();
+    });
   }
 
   /**
