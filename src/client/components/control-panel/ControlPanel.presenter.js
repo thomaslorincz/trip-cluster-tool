@@ -35,13 +35,17 @@ export default class ControlPanelPresenter extends Presenter {
     });
 
     this.view.container.addEventListener('runAgainClicked', () => {
+      const newSettings = {...this.model.controlPanel};
+      newSettings.iteration = 0;
       console.log('Run Again Clicked');
     });
 
     this.view.container.addEventListener('datasetClicked', (event) => {
       const newSettings = {...this.model.controlPanel};
+      newSettings.iteration = 0;
       newSettings.dataset = event.detail;
       this.model.updateControlPanel(newSettings);
+      this.model.processData();
     });
 
     this.view.container.addEventListener('purposeClicked', (event) => {

@@ -1,5 +1,6 @@
 import View from '../../superclasses/View';
 import mapboxgl from 'mapbox-gl';
+import proj4 from 'proj4';
 
 /**
  * A view that represents an interactive map.
@@ -10,6 +11,19 @@ export default class MapView extends View {
    */
   constructor(container) {
     super(container);
+
+    proj4.defs([
+      [
+        'EPSG:4326',
+        '+title=WGS 84 (long/lat) +proj=longlat +ellps=WGS84 +datum=WGS84 +un' +
+        'its=degrees',
+      ],
+      [
+        'EPSG:3776',
+        '+proj=tmerc +lat_0=0 +lon_0=-114 +k=0.9999 +x_0=0 +y_0=0 +ellps=GRS8' +
+        '0 +datum=NAD83 +units=m +no_defs',
+      ],
+    ]);
 
     mapboxgl.accessToken = 'pk.eyJ1IjoidGhvbWFzbG9yaW5jeiIsImEiOiJjamx5aXVwaH' +
       'AxamZzM3dsaWdkZ3Q2eGJyIn0.mXjlp9c3l2-NBoS1uaEUdw';
@@ -23,6 +37,8 @@ export default class MapView extends View {
 
     this.map.dragRotate.disable();
     this.map.touchZoomRotate.disable();
+
+    this.lineLayers = [];
 
     this.map.on('load', () => {
       this.map.addLayer({
@@ -78,6 +94,57 @@ export default class MapView extends View {
       this.map.on('mouseleave', 'districtLayer', () => {
         this.map.getCanvas().style.cursor = '';
       });
+    });
+  }
+
+  /**
+   * @param {[]} lineData
+   */
+  addFlowLine(lineData) {
+    const lineWidth = Math.max(lineData[4] / 100, 1);
+
+    const origin = proj4('EPSG:3776', 'EPSG:4326', [lineData[0], lineData[1]]);
+    const dest = proj4('EPSG:3776', 'EPSG:4326', [lineData[2], lineData[3]]);
+
+    this.lineLayers.push(lineData[5]);
+
+    this.map.addLayer({
+      'id': lineData[5],
+      'type': 'line',
+      'source': {
+        'type': 'geojson',
+        'data': {
+          'type': 'Feature',
+          'properties': {},
+          'geometry': {
+            'type': 'LineString',
+            'coordinates': [origin, dest],
+          },
+        },
+      },
+      'paint': {
+        'line-color': '#ff0000',
+        'line-width': [
+          'interpolate', ['linear'], ['zoom'],
+          7, lineWidth,
+        ],
+        'line-opacity': 0.7,
+      },
+    });
+  }
+
+  /**
+   * Removes all drawn lines
+   */
+  removeFlowLines() {
+    this.lineLayers.forEach((id) => {
+      if (this.map.getLayer(id)) {
+        this.map.removeLayer(id);
+      }
+
+      if (this.map.getSource(id)) {
+        this.map.removeSource(id);
+      }
     });
   }
 

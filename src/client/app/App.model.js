@@ -21,14 +21,11 @@ export default class AppModel extends Model {
       autoIterate: false,
       clusters: 30,
       dataset: 'total',
-      purpose: 'work',
+      purpose: 'W',
     };
 
     this.totalDataMatrix = {};
     this.transitDataMatrix = {};
-
-    // Total selected by default
-    this.selectedMatrix = this.totalDataMatrix;
 
     Promise.all([
       d3.csv(totalDataPath),
@@ -46,14 +43,14 @@ export default class AppModel extends Model {
         weight: 'Total',
       };
 
-      const uniqueTripTypes = [transitData[0].Purpose_Category];
+      const uniqueTripTypes = [transitData[0]['Purpose_Category']];
 
       let thisTravelType = uniqueTripTypes[0];
       let dataOfThisTravelType = [];
       for (let j = 0; j < transitData.length; j++) {
-        if (transitData[j].Purpose_Category !== thisTravelType) {
+        if (transitData[j]['Purpose_Category'] !== thisTravelType) {
           this.transitDataMatrix[thisTravelType] = dataOfThisTravelType;
-          thisTravelType = transitData[j].Purpose_Category;
+          thisTravelType = transitData[j]['Purpose_Category'];
           uniqueTripTypes.push(thisTravelType);
           dataOfThisTravelType = [];
         }
@@ -75,9 +72,9 @@ export default class AppModel extends Model {
       thisTravelType = uniqueTripTypes[0];
       dataOfThisTravelType = [];
       for (let j = 0; j < totalData.length; j++) {
-        if (totalData[j].Purpose_Category !== thisTravelType) {
+        if (totalData[j]['Purpose_Category'] !== thisTravelType) {
           this.totalDataMatrix[thisTravelType] = dataOfThisTravelType;
-          thisTravelType = totalData[j].Purpose_Category;
+          thisTravelType = totalData[j]['Purpose_Category'];
           dataOfThisTravelType = [];
         }
         const thisDataArray = [
@@ -95,15 +92,17 @@ export default class AppModel extends Model {
       }
       this.totalDataMatrix[thisTravelType] = dataOfThisTravelType;
 
-      console.log(this.transitDataMatrix);
-      console.log(this.totalDataMatrix);
-
       this.dataLoaded = true;
     }).catch((error) => {
       console.log(error);
     });
 
     this.newCentroid = [];
+    this.result = [];
+    this.transitArray = [];
+
+    // Total selected by default
+    this.selectedMatrix = this.totalDataMatrix;
   }
 
   /**
@@ -125,7 +124,7 @@ export default class AppModel extends Model {
   /**
    * @param {number} districtId
    */
-  updateSelected(districtId) {
+  geographySelected(districtId) {
     this.selected = districtId;
     this.controlPanel.district = districtId.toString();
     document.dispatchEvent(new CustomEvent('selectedUpdated', {
@@ -134,65 +133,144 @@ export default class AppModel extends Model {
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
     }));
+
+    this.processData(this.controlPanel.purpose, this.controlPanel.clusters);
   }
 
   /**
    * K-means initialization. This is different from traditional K-means.
    * It gives a higher possibility to lines with a higher weight to be chosen as
-   * an initial cluster center the algorithm is based on
+   * an initial cluster center. The algorithm is based on
    * https://medium.com/@peterkellyonline/weighted-random-selection-3ff222917eb6
+   * @param {string} purpose
+   * @param {number} numClusters
    */
-  processData() {
-    // const matrix = this.controlPanel.purpose;
-    // const numClusted = this.controlPanel.clusters;
-
+  processData(purpose, numClusters) {
     let totalWeight = 0;
-    let transitArray = [];
+    this.transitArray = [];
 
     if (this.controlPanel.district === 'all') {
-      transitArray = this.selectedMatrix[this.controlPanel.purpose];
+      this.transitArray = this.selectedMatrix[purpose];
     } else {
-      const purposeArray = this.selectedMatrix[this.controlPanel.purpose];
+      const purposeArray = this.selectedMatrix[purpose];
       for (let i = 0; i < purposeArray.length; i++) {
-        if (Number(purposeArray[i][8] === Number(this.controlPanel.district))) {
-          transitArray.push(purposeArray[i]);
+        if (Number(purposeArray[i][8]) === Number(this.controlPanel.district)) {
+          this.transitArray.push(purposeArray[i]);
         }
       }
     }
 
-    for (let i = 0; i < transitArray.length; i++) {
-      totalWeight += transitArray[i][4];
+    for (let i = 0; i < this.transitArray.length; i++) {
+      totalWeight += this.transitArray[i][4];
     }
 
     let currentSum = 0;
-    const transitArraySums = new Array(transitArray.length);
-    for (let i = 0; i < transitArray.length; i++) {
-      currentSum += transitArray[i][4];
+    const transitArraySums = new Array(this.transitArray.length);
+    for (let i = 0; i < this.transitArray.length; i++) {
+      currentSum += this.transitArray[i][4];
       transitArraySums[i] = currentSum;
     }
 
     this.newCentroid = [];
-    if (transitArray.length < this.controlPanel.clusters) {
-      this.newCentroid = transitArray;
+    if (this.transitArray.length < numClusters) {
+      this.newCentroid = this.transitArray;
     } else {
-      this.newCentroid = new Array(this.controlPanel.clusters);
+      this.newCentroid = new Array(numClusters);
       for (let i = 0; i < this.newCentroid.length; i++) {
         const randomWeight = Math.floor(Math.random() * totalWeight);
-        for (let j = 0; j < transitArray.length; j++) {
+        for (let j = 0; j < this.transitArray.length; j++) {
           if (transitArraySums[j] >= randomWeight
-              && this.newCentroid.indexOf(transitArray[j]) < 0) {
-            this.newCentroid[i] = transitArray[j];
+              && this.newCentroid.indexOf(this.transitArray[j]) < 0) {
+            this.newCentroid[i] = this.transitArray[j];
             break;
           }
         }
       }
 
       // Delete falsy elements ('', 0, NaN, null, undefined, false)
-      this.newCentroid = this.newCentroid.filter(Boolean);
+      this.newCentroid = this.newCentroid.filter((e) => e);
     }
 
-    if (transitArray.length > 0) {
-      result = this.splitIntoGroups();
+    if (this.transitArray.length > 0) {
+      this.result = this.splitIntoGroups();
+    }
+  }
+
+  /**
+   * Calculate the distance between each line and each cluster center. Split
+   * lines into a number of cluster groups cluster groups.
+   */
+  splitIntoGroups() {
+    const transitArrayWithClusters = {};
+    for (let i = 0; i < this.newCentroid.length; i++) {
+      transitArrayWithClusters[i] = [];
+    }
+
+    this.result = new Array(this.transitArray.length);
+    for (let i = 0; i < this.transitArray.length; i++) {
+      let group = 0;
+      let minDist = Number.POSITIVE_INFINITY;
+      for (let j = 0; j < this.newCentroid.length; j++) {
+        // Euclidean distance
+        const currentDist = Math.sqrt(
+            Math.pow(this.transitArray[i][0] - this.newCentroid[j][0], 2) +
+            Math.pow(this.transitArray[i][1] - this.newCentroid[j][1], 2) +
+            Math.pow(this.transitArray[i][2] - this.newCentroid[j][2], 2) +
+            Math.pow(this.transitArray[i][3] - this.newCentroid[j][3], 2)
+        );
+
+        if (currentDist < minDist) {
+          group = j;
+          minDist = currentDist;
+        }
+      }
+
+      this.result[i] = group;
+    }
+
+    for (let i = 0; i < this.transitArray.length; i++) {
+      transitArrayWithClusters[this.result[i]].push(this.transitArray[i]);
+    }
+    this.findNewCentroid(transitArrayWithClusters);
+    this.redrawClusters(this.newCentroid);
+  }
+
+  /**
+   * @param {{}} transitArrayWithClusters
+   */
+  findNewCentroid(transitArrayWithClusters) {
+    this.newCentroid = [];
+    for (const [key] of Object.entries(transitArrayWithClusters)) {
+      let weight = 0;
+      let destX = 0;
+      let destY = 0;
+      let origX = 0;
+      let origY = 0;
+      const groupMember = transitArrayWithClusters[key];
+      for (let n = 0; n < groupMember.length; n++) {
+        if (groupMember[n][4] !== 0) {
+          const oldWeight = groupMember[n][4];
+          const newWeight = weight + oldWeight;
+          origX = (origX * weight + groupMember[n][0] * oldWeight) / newWeight;
+          origY = (origY * weight + groupMember[n][1] * oldWeight) / newWeight;
+          destX = (destX * weight + groupMember[n][2] * oldWeight) / newWeight;
+          destY = (destY * weight + groupMember[n][3] * oldWeight) / newWeight;
+          weight = newWeight;
+        }
+      }
+      this.newCentroid.push([origX, origY, destX, destY, weight, key]);
+    }
+  }
+
+  /**
+   * @param {[]} centroid
+   */
+  redrawClusters(centroid) {
+    document.dispatchEvent(new CustomEvent('removeFlowLines'));
+    for (let j = 0; j < centroid.length; j++) {
+      document.dispatchEvent(new CustomEvent('addFlowLine', {
+        detail: centroid[j],
+      }));
     }
   }
 }

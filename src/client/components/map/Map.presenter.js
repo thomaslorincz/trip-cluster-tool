@@ -16,8 +16,16 @@ export default class MapPresenter extends Presenter {
       this.view.updateSelected(event.detail);
     });
 
+    document.addEventListener('addFlowLine', (event) => {
+      this.view.addFlowLine(event.detail);
+    });
+
+    document.addEventListener('removeFlowLines', () => {
+      this.view.removeFlowLines();
+    });
+
     this.view.container.addEventListener('featureClicked', (event) => {
-      this.model.updateSelected(event.detail);
+      this.model.geographySelected(event.detail);
     });
   }
 }
