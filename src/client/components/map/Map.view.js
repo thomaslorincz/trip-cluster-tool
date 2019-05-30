@@ -117,6 +117,7 @@ export default class MapView extends View {
           'type': 'Feature',
           'properties': {
             'magnitude': line[4],
+            'base-width': 2000 * ((line[4] - min) / (max - min)),
           },
           'geometry': {
             'type': 'LineString',
@@ -127,15 +128,30 @@ export default class MapView extends View {
       'paint': {
         'line-color': [
           'interpolate', ['linear'], ['get', 'magnitude'],
-          min, '#ff7f7f',
+          min, '#ffffff',
           max, '#ff0000',
         ],
         'line-width': [
-          'interpolate', ['linear'], ['zoom'],
-          7, 10,
+          'interpolate', ['exponential', 2], ['zoom'],
+          0, ['*', ['get', 'base-width'], ['^', 2, -16]],
+          24, ['*', ['get', 'base-width'], ['^', 2, 8]],
         ],
+        'line-opacity': 0.8,
       },
     });
+
+    // this.map.addLayer({
+    //   'id': `${line[5]}-arrows`,
+    //   'type': 'symbol',
+    //   'source': line[5],
+    //   'layout': {
+    //     'symbol-placement': 'line',
+    //     'symbol-spacing': 100,
+    //     'icon-image': 'triangle-15',
+    //     'icon-rotation-alignment': 'map',
+    //     'icon-rotate': 90,
+    //   },
+    // });
   }
 
   /**
@@ -146,6 +162,10 @@ export default class MapView extends View {
       if (this.map.getLayer(id)) {
         this.map.removeLayer(id);
       }
+
+      // if (this.map.getLayer(`${id}-arrows`)) {
+      //   this.map.removeLayer(`${id}-arrows`);
+      // }
 
       if (this.map.getSource(id)) {
         this.map.removeSource(id);
