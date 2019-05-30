@@ -138,6 +138,19 @@ export default class AppModel extends Model {
   }
 
   /**
+   * TODO: Work in progress
+   */
+  autoIterate() {
+    while (this.controlPanel.iteration <= 100) {
+      this.controlPanel.iteration++;
+      document.dispatchEvent(new CustomEvent('controlsUpdated', {
+        detail: this.controlPanel,
+      }));
+      this.splitIntoGroups();
+    }
+  }
+
+  /**
    * K-means initialization. This is different from traditional K-means.
    * It gives a higher possibility to lines with a higher weight to be chosen as
    * an initial cluster center. The algorithm is based on
