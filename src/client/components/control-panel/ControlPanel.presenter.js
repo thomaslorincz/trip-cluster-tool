@@ -27,6 +27,7 @@ export default class ControlPanelPresenter extends Presenter {
       const newSettings = {...this.model.controlPanel};
       newSettings.autoIterate = !this.model.controlPanel.autoIterate;
       this.model.updateControlPanel(newSettings);
+      this.model.autoIterate();
     });
 
     this.view.container.addEventListener('clusterInput', (event) => {
