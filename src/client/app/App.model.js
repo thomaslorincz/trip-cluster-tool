@@ -103,6 +103,8 @@ export default class AppModel extends Model {
 
     // Total selected by default
     this.selectedMatrix = this.totalDataMatrix;
+
+    this.autoIterateInterval = null;
   }
 
   /**
@@ -130,23 +132,29 @@ export default class AppModel extends Model {
     document.dispatchEvent(new CustomEvent('selectedUpdated', {
       detail: this.selected,
     }));
+
+    this.controlPanel.iteration = 1;
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
     }));
-
     this.processData(this.controlPanel.purpose, this.controlPanel.clusters);
   }
 
   /**
-   * TODO: Work in progress
+   * Continuously runs new iterations while thr auto-iterate toggle switch is
+   * toggled on.
    */
   autoIterate() {
-    while (this.controlPanel.iteration <= 100) {
-      this.controlPanel.iteration++;
-      document.dispatchEvent(new CustomEvent('controlsUpdated', {
-        detail: this.controlPanel,
-      }));
-      this.splitIntoGroups();
+    if (this.controlPanel.autoIterate) {
+      this.autoIterateInterval = setInterval(() => {
+        this.controlPanel.iteration++;
+        document.dispatchEvent(new CustomEvent('controlsUpdated', {
+          detail: this.controlPanel,
+        }));
+        this.splitIntoGroups();
+      }, 100);
+    } else {
+      clearInterval(this.autoIterateInterval);
     }
   }
 
