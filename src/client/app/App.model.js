@@ -19,7 +19,7 @@ export default class AppModel extends Model {
       district: '',
       iteration: 0,
       autoIterate: false,
-      clusters: 30,
+      clusters: 10,
       dataset: 'total',
       purpose: 'W',
     };
