@@ -117,7 +117,7 @@ export default class MapView extends View {
           'type': 'Feature',
           'properties': {
             'magnitude': line[4],
-            'base-width': 2000 * ((line[4] - min) / (max - min)),
+            'base-width': Math.max(2000 * ((line[4] - min) / (max - min)), 100),
           },
           'geometry': {
             'type': 'LineString',
