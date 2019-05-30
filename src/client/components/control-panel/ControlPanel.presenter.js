@@ -20,6 +20,7 @@ export default class ControlPanelPresenter extends Presenter {
       const newSettings = {...this.model.controlPanel};
       newSettings.iteration++;
       this.model.updateControlPanel(newSettings);
+      this.model.splitIntoGroups();
     });
 
     this.view.container.addEventListener('autoIterateClicked', () => {
@@ -37,7 +38,11 @@ export default class ControlPanelPresenter extends Presenter {
     this.view.container.addEventListener('runAgainClicked', () => {
       const newSettings = {...this.model.controlPanel};
       newSettings.iteration = 0;
-      console.log('Run Again Clicked');
+      this.model.updateControlPanel(newSettings);
+      this.model.processData(
+          this.model.controlPanel.purpose,
+          this.model.controlPanel.clusters
+      );
     });
 
     this.view.container.addEventListener('datasetClicked', (event) => {
@@ -45,13 +50,21 @@ export default class ControlPanelPresenter extends Presenter {
       newSettings.iteration = 0;
       newSettings.dataset = event.detail;
       this.model.updateControlPanel(newSettings);
-      this.model.processData();
+      this.model.processData(
+          this.model.controlPanel.purpose,
+          this.model.controlPanel.clusters
+      );
     });
 
     this.view.container.addEventListener('purposeClicked', (event) => {
       const newSettings = {...this.model.controlPanel};
+      newSettings.iteration = 0;
       newSettings.purpose = event.detail;
       this.model.updateControlPanel(newSettings);
+      this.model.processData(
+          this.model.controlPanel.purpose,
+          this.model.controlPanel.clusters
+      );
     });
   }
 }
