@@ -140,18 +140,18 @@ export default class MapView extends View {
       },
     });
 
-    // this.map.addLayer({
-    //   'id': `${line[5]}-arrows`,
-    //   'type': 'symbol',
-    //   'source': line[5],
-    //   'layout': {
-    //     'symbol-placement': 'line',
-    //     'symbol-spacing': 100,
-    //     'icon-image': 'triangle-15',
-    //     'icon-rotation-alignment': 'map',
-    //     'icon-rotate': 90,
-    //   },
-    // });
+    this.map.addLayer({
+      'id': `${line[5]}-arrows`,
+      'type': 'symbol',
+      'source': line[5],
+      'layout': {
+        'symbol-placement': 'line',
+        'symbol-spacing': 50,
+        'icon-image': 'triangle-15',
+        'icon-rotation-alignment': 'map',
+        'icon-rotate': 90,
+      },
+    });
   }
 
   /**
@@ -163,9 +163,9 @@ export default class MapView extends View {
         this.map.removeLayer(id);
       }
 
-      // if (this.map.getLayer(`${id}-arrows`)) {
-      //   this.map.removeLayer(`${id}-arrows`);
-      // }
+      if (this.map.getLayer(`${id}-arrows`)) {
+        this.map.removeLayer(`${id}-arrows`);
+      }
 
       if (this.map.getSource(id)) {
         this.map.removeSource(id);
