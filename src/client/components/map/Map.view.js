@@ -104,26 +104,30 @@ export default class MapView extends View {
    */
   addFlowLine({line, min, max}) {
     const origin = proj4('EPSG:3776', 'EPSG:4326', [line[0], line[1]]);
-    const dest = proj4('EPSG:3776', 'EPSG:4326', [line[2], line[3]]);
+    let animation; // to store and cancel the animation
+    const xDifference = line[2] - line[0];
+    const yDifference = line[3] - line[1];
+    let progress = 0;
 
     this.lineLayers.push(line[5]);
 
+    const geoJson = {
+      'type': 'Feature',
+      'properties': {
+        'magnitude': line[4],
+        'base-width': Math.max(2000 * ((line[4] - min) / (max - min)), 100),
+      },
+      'geometry': {
+        'type': 'LineString',
+        'coordinates': [origin, origin],
+      },
+    };
     this.map.addLayer({
       'id': line[5],
       'type': 'line',
       'source': {
         'type': 'geojson',
-        'data': {
-          'type': 'Feature',
-          'properties': {
-            'magnitude': line[4],
-            'base-width': Math.max(2000 * ((line[4] - min) / (max - min)), 100),
-          },
-          'geometry': {
-            'type': 'LineString',
-            'coordinates': [origin, dest],
-          },
-        },
+        'data': geoJson,
       },
       'paint': {
         'line-color': [
@@ -139,19 +143,22 @@ export default class MapView extends View {
         'line-opacity': 0.8,
       },
     });
-
-    this.map.addLayer({
-      'id': `${line[5]}-arrows`,
-      'type': 'symbol',
-      'source': line[5],
-      'layout': {
-        'symbol-placement': 'line',
-        'symbol-spacing': 50,
-        'icon-image': 'triangle-15',
-        'icon-rotation-alignment': 'map',
-        'icon-rotate': 90,
-      },
-    });
+    const animateLine = () =>{
+      progress += 0.02;// increment progress by a speed factor
+      if (progress >= 1) {
+        progress = 0;
+        geoJson.geometry.coordinates = [origin, origin];
+      } else {
+        // eslint-disable-next-line max-len
+        geoJson.geometry.coordinates = [origin, proj4('EPSG:3776', 'EPSG:4326', [line[0] + progress * xDifference, line[1] + progress * yDifference])];
+        // then update the map
+        this.map.getSource(line[5]).setData(geoJson);
+      }
+      // Request the next frame of the animation.
+      animation = requestAnimationFrame(animateLine);
+    };
+    animateLine();
+    // create popup to show number of trips
     const popup = new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: false,
