@@ -1,3 +1,4 @@
+/* eslint-disable linebreak-style */
 import View from '../../superclasses/View';
 import mapboxgl from 'mapbox-gl';
 import proj4 from 'proj4';
@@ -143,7 +144,10 @@ export default class MapView extends View {
         'line-opacity': 0.8,
       },
     });
-    const animateLine = () =>{
+    const animateLine = () => {
+      if (!this.map.getLayer(line[5]) || !this.map.getSource(line[5])) {
+        return;
+      }
       progress += 0.02;// increment progress by a speed factor
       if (progress >= 1) {
         progress = 0;
@@ -197,5 +201,12 @@ export default class MapView extends View {
    */
   updateSelected(districtId) {
     this.map.setFilter('districtLayerSelected', ['in', 'District', districtId]);
+  }
+
+  /**
+   * Add clusters to the map
+   */
+  addClusters() {
+
   }
 }
