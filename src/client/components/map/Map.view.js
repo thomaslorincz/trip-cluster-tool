@@ -50,8 +50,8 @@ export default class MapView extends View {
         'source-layer': 'district1669-5c4o7a',
         'type': 'fill',
         'paint': {
-          'fill-color': 'rgba(0,0,255,0.5)',
-          'fill-outline-color': 'rgba(0,0,255,0.2)',
+          'fill-color': 'rgba(0,0,255,0.3)',
+          'fill-outline-color': 'rgba(0,0,255,0.4)',
         },
       });
 
@@ -163,12 +163,12 @@ export default class MapView extends View {
       closeButton: false,
       closeOnClick: false,
     });
-    this.map.on('mouseenter', line[5], (e) =>{
+    this.map.on('mouseenter', line[5], (e) => {
       popup.setLngLat(e.lngLat)
           .setHTML('Number of Trips: ' + line[4])
           .addTo(this.map);
     });
-    this.map.on('mouseleave', line[5], () =>{
+    this.map.on('mouseleave', line[5], () => {
       popup.remove();
     });
   }
