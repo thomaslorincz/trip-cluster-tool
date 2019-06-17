@@ -1,6 +1,4 @@
 import Model from '../superclasses/Model';
-import totalDataPath from '../../../data/result_total_sort_by_purpose.csv';
-import transitDataPath from '../../../data/result_transit_sort_by_purpose.csv';
 import * as d3 from 'd3';
 
 /**
@@ -28,8 +26,8 @@ export default class AppModel extends Model {
     this.transitDataMatrix = {};
 
     Promise.all([
-      d3.csv(totalDataPath),
-      d3.csv(transitDataPath),
+      d3.csv('data/result_total.csv'),
+      d3.csv('data/result_transit.csv'),
     ]).then(([totalData, transitData]) => {
       const csvHeaders = {
         origin_zone: 'OriginZoneTAZ1669EETP',
