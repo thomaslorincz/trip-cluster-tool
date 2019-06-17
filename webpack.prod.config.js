@@ -24,6 +24,16 @@ module.exports = {
       }),
       new OptimizeCSSAssetsPlugin({}),
     ],
+    runtimeChunk: 'single',
+    splitChunks: {
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+        },
+      },
+    },
   },
   module: {
     rules: [
@@ -53,11 +63,11 @@ module.exports = {
     ]),
     new HtmlWebPackPlugin({
       template: './src/client/index.html',
-      filename: './index.html',
+      filename: 'index.html',
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
-      chunkFilename: '[id].css',
+      chunkFilename: '[name].css',
     }),
   ],
 };

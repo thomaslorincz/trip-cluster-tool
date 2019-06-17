@@ -51,7 +51,7 @@ module.exports = {
     ]),
     new HtmlWebPackPlugin({
       template: './src/client/index.html',
-      filename: './index.html',
+      filename: 'index.html',
       excludeChunks: ['server'],
     }),
     new webpack.HotModuleReplacementPlugin(),
