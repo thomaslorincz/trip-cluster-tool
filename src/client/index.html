@@ -6,59 +6,85 @@
   <meta name="description" content="A visualization of traffic flows in Edmonton using k-means clustering">
   <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
   <meta name="theme-color" content="#0000FF">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css?family=Montserrat|Raleway&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
   <link href="https://api.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.css" rel="stylesheet">
 </head>
 <body>
-<div id="nameplate">Trip Cluster Tool</div>
 <div id="map"></div>
 <div id="control-panel">
   <div class="control">
-    <div class="control-label"><i class="control-icon material-icons-round">my_location</i><div class="control-title">Selected</div></div>
-    <div id="selected-geography">Nothing Selected</div>
+    <div class="control-label"><i class="control-icon material-icons">my_location</i><div class="control-title">Selected</div></div>
+    <div class="control-content">
+      <div id="selected-geography">Nothing Selected</div>
+    </div>
   </div>
   <div class="control">
-    <div class="control-label"><i class="control-icon material-icons-round">refresh</i><div class="control-title">Iteration</div></div>
-    <div id="iteration-number">0</div>
-    <button id="next-iteration">Next Iteration</button>
-    <div id="auto-iterate">
-      <div id="auto-iterate-label">Auto-Iterate:</div>
-      <div id="auto-iterate-switch">
-        <div id="auto-iterate-switch-slider"></div>
+    <div class="control-label"><i class="control-icon material-icons">refresh</i><div class="control-title">K-Means Iteration</div></div>
+    <div class="control-content">
+      <div id="iteration-number" class="content-text blue-text">0</div>
+      <i class="control-icon material-icons large-text">skip_next</i>
+      <i class="control-icon material-icons large-text">fast_forward</i>
+    </div>
+  </div>
+  <div class="control">
+    <div class="control-label"><i class="control-icon material-icons">shuffle</i><div class="control-title">Flow Lines</div></div>
+    <div class="control-content">
+      <i class="control-icon material-icons large-text">skip_previous</i>
+      <div id="cluster-number" class="content-text blue-text">10</div>
+      <i class="control-icon material-icons large-text">skip_next</i>
+    </div>
+  </div>
+  <div class="control">
+    <div class="control-label"><i class="control-icon material-icons">landscape</i><div class="control-title">Boundaries</div></div>
+    <div class="control-content control-content-list">
+      <div class="control-content">
+        <i class="content-text  material-icons">radio_button_checked</i>
+        <div class="content-text blue-text">Districts</div>
+      </div>
+      <div class="control-content">
+        <i class="content-text material-icons">radio_button_unchecked</i>
+        <div class="content-text">Zones</div>
       </div>
     </div>
   </div>
   <div class="control">
-    <div class="control-label"><i class="control-icon material-icons-round">bubble_chart</i><div class="control-title">Clusters</div></div>
-    <div id="cluster-number">10</div>
-    <input type="range" id="cluster-slider" value="10" min="5" max="30">
-    <button id="run-again-button">Run Again</button>
+    <div class="control-label"><i class="control-icon material-icons">folder</i><div class="control-title">Dataset</div></div>
+    <div class="control-content control-content-list">
+      <div class="control-content">
+        <i class="content-text  material-icons">radio_button_checked</i>
+        <div class="content-text blue-text">Total</div>
+      </div>
+      <div class="control-content">
+        <i class="content-text material-icons">radio_button_unchecked</i>
+        <div class="content-text">Transit</div>
+      </div>
+    </div>
   </div>
   <div class="control">
-    <div class="control-label"><i class="control-icon material-icons-round">folder</i><div class="control-title">Dataset</div></div>
-    <input type="radio" id="dataset-total" value="total" name="dataset" checked>
-    <label for="dataset-total">Total</label>
-    <br>
-    <input type="radio" id="dataset-transit" value="transit" name="dataset" >
-    <label for="dataset-transit">Transit</label>
-  </div>
-  <div class="control">
-    <div class="control-label"><i class="control-icon material-icons-round">directions</i><div class="control-title">Trip Purpose</div></div>
-    <input type="radio" id="purpose-work" value="W" name="purpose" checked>
-    <label for="purpose-work">Work</label>
-    <br>
-    <input type="radio" id="purpose-other" value="O" name="purpose">
-    <label for="purpose-other">Other</label>
-    <br>
-    <input type="radio" id="purpose-pse-to-school" value="PSE_S" name="purpose">
-    <label for="purpose-pse-to-school">PSE to School</label>
-    <br>
-    <input type="radio" id="purpose-other-to-school" value="Other_S" name="purpose">
-    <label for="purpose-other-to-school">Other to School</label>
-    <br>
-    <input type="radio" id="purpose-work-and-school" value="B" name="purpose">
-    <label for="purpose-work-and-school">Work and School</label>
+    <div class="control-label"><i class="control-icon material-icons">directions</i><div class="control-title">Trip Purpose</div></div>
+    <div class="control-content control-content-list">
+      <div class="control-content">
+        <i class="content-text material-icons" data-value="W">radio_button_checked</i>
+        <div class="content-text blue-text">Work</div>
+      </div>
+      <div class="control-content">
+        <i class="content-text material-icons" data-value="PSE_S">radio_button_unchecked</i>
+        <div class="content-text">School (PSE)</div>
+      </div>
+      <div class="control-content">
+        <i class="content-text material-icons" data-value="Other_S">radio_button_unchecked</i>
+        <div class="content-text">School (Other)</div>
+      </div>
+      <div class="control-content">
+        <i class="content-text material-icons" data-value="B">radio_button_unchecked</i>
+        <div class="content-text">Work and School</div>
+      </div>
+      <div class="control-content">
+        <i class="content-text material-icons" data-value="O">radio_button_unchecked</i>
+        <div class="content-text">Other</div>
+      </div>
+    </div>
   </div>
 </div>
 </body>
