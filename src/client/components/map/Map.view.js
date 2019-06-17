@@ -117,7 +117,7 @@ export default class MapView extends View {
           'type': 'Feature',
           'properties': {
             'magnitude': line[4],
-            'base-width': Math.max(2000 * ((line[4] - min) / (max - min)), 100),
+            'base-width': Math.max(1000 * ((line[4] - min) / (max - min)), 200),
           },
           'geometry': {
             'type': 'LineString',
@@ -138,31 +138,6 @@ export default class MapView extends View {
         ],
         'line-opacity': 0.8,
       },
-    });
-
-    this.map.addLayer({
-      'id': `${line[5]}-arrows`,
-      'type': 'symbol',
-      'source': line[5],
-      'layout': {
-        'symbol-placement': 'line',
-        'symbol-spacing': 50,
-        'icon-image': 'triangle-15',
-        'icon-rotation-alignment': 'map',
-        'icon-rotate': 90,
-      },
-    });
-    const popup = new mapboxgl.Popup({
-      closeButton: false,
-      closeOnClick: false,
-    });
-    this.map.on('mouseenter', line[5], (e) => {
-      popup.setLngLat(e.lngLat)
-          .setHTML('Number of Trips: ' + line[4])
-          .addTo(this.map);
-    });
-    this.map.on('mouseleave', line[5], () => {
-      popup.remove();
     });
   }
 
