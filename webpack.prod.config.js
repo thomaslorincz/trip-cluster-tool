@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebPackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
@@ -41,23 +42,15 @@ module.exports = {
         ],
       },
       {
-        test: /\.(png|svg|jpe?g|gif|geojson|csv)$/,
-        use: [
-          {
-            loader: 'file-loader',
-            options: {
-              name: '[hash].[ext]',
-            },
-          },
-        ],
-      },
-      {
         test: /\.css$/,
         use: [MiniCssExtractPlugin.loader, 'css-loader'],
       },
     ],
   },
   plugins: [
+    new CopyWebpackPlugin([
+      {from: 'data', to: 'data'},
+    ]),
     new HtmlWebPackPlugin({
       template: './src/client/index.html',
       filename: './index.html',
