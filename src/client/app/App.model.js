@@ -1,5 +1,5 @@
 import Model from '../superclasses/Model';
-import * as d3 from 'd3';
+import * as d3 from 'd3-fetch';
 
 /**
  * Model that stores and controls the app's data and state.
