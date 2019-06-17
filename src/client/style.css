@@ -38,7 +38,7 @@ body {
   position: relative;
   box-sizing: border-box;
   font-family: sans-serif;
-  margin: 36px 36px 36px 18px;
+  margin: 36px 18px;
 }
 
 .control:first-child {
