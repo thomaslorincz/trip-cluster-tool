@@ -9,8 +9,6 @@ export default class AppModel extends Model {
   constructor() {
     super();
 
-    this.dataLoaded = false;
-
     this.selected = null;
 
     this.controlPanel = {
@@ -89,8 +87,6 @@ export default class AppModel extends Model {
         dataOfThisTravelType.push(thisDataArray);
       }
       this.totalDataMatrix[thisTravelType] = dataOfThisTravelType;
-
-      this.dataLoaded = true;
     }).catch((error) => {
       console.log(error);
     });
