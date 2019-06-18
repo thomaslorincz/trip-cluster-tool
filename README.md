@@ -16,9 +16,5 @@ npm run dev
 #### Production Mode
 (The code is minified and does not have access to source map tools or hot module replacement)
 ```
-npm start
-```
-or
-```
 npm run prod
 ```
