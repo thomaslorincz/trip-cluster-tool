@@ -38,6 +38,17 @@ module.exports = {
   module: {
     rules: [
       {
+        enforce: 'pre',
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'eslint-loader',
+        options: {
+          emitWarning: true,
+          failOnError: true,
+          failOnWarning: false,
+        },
+      },
+      {
         test: /\.js$/,
         exclude: /node_modules/,
         use: {loader: 'babel-loader'},
@@ -64,6 +75,7 @@ module.exports = {
     new HtmlWebPackPlugin({
       template: './src/client/index.html',
       filename: 'index.html',
+      excludeChunks: ['server'],
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
