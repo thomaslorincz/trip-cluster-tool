@@ -13,10 +13,12 @@ export default class AppModel extends Model {
       district: -1,
       iteration: 0,
       autoIterate: false,
-      clusters: 10,
+      flowLines: 10,
       dataset: 'total',
       purpose: 'W',
     };
+
+    this.maxFlowLines = 30;
 
     this.totalDataMatrix = {};
     this.transitDataMatrix = {};
@@ -89,9 +91,8 @@ export default class AppModel extends Model {
       console.log(error);
     });
 
-    this.newCentroid = [];
-    this.result = [];
-    this.transitArray = [];
+    this.centroid = [];
+    this.transitMatrix = [];
 
     // Total selected by default
     this.selectedMatrix = this.totalDataMatrix;
@@ -104,7 +105,7 @@ export default class AppModel extends Model {
    * @param {string} settings.district
    * @param {number} settings.iteration
    * @param {boolean} settings.autoIterate
-   * @param {number} settings.clusters
+   * @param {number} settings.flowLines
    * @param {string} settings.dataset
    * @param {string} settings.purpose
    */
@@ -156,6 +157,34 @@ export default class AppModel extends Model {
   }
 
   /**
+   * Decreases the number of flow lines by 1
+   */
+  decrementFlowLines() {
+    if (this.controlPanel.flowLines > 1) {
+      this.controlPanel.flowLines--;
+      this.controlPanel.iteration = 1;
+      this.processData(this.controlPanel.purpose, this.controlPanel.flowLines);
+      document.dispatchEvent(new CustomEvent('controlsUpdated', {
+        detail: this.controlPanel,
+      }));
+    }
+  }
+
+  /**
+   * Increases the number of flow lines by 1
+   */
+  incrementFlowLines() {
+    if (this.controlPanel.flowLines !== this.maxFlowLines) {
+      this.controlPanel.flowLines++;
+      this.controlPanel.iteration = 1;
+      this.processData(this.controlPanel.purpose, this.controlPanel.flowLines);
+      document.dispatchEvent(new CustomEvent('controlsUpdated', {
+        detail: this.controlPanel,
+      }));
+    }
+  }
+
+  /**
    * K-means initialization. This is different from traditional K-means.
    * It gives a higher possibility to lines with a higher weight to be chosen as
    * an initial cluster center. The algorithm is based on
@@ -165,72 +194,72 @@ export default class AppModel extends Model {
    */
   processData(purpose, numClusters) {
     let totalWeight = 0;
-    this.transitArray = [];
+    this.transitMatrix = [];
 
     const purposeArray = this.selectedMatrix[purpose];
     for (let i = 0; i < purposeArray.length; i++) {
       if (Number(purposeArray[i][8]) === this.controlPanel.district) {
-        this.transitArray.push(purposeArray[i]);
+        this.transitMatrix.push(purposeArray[i]);
       }
     }
 
-    for (let i = 0; i < this.transitArray.length; i++) {
-      totalWeight += this.transitArray[i][4];
+    for (let i = 0; i < this.transitMatrix.length; i++) {
+      totalWeight += this.transitMatrix[i][4];
     }
 
     let currentSum = 0;
-    const transitArraySums = new Array(this.transitArray.length);
-    for (let i = 0; i < this.transitArray.length; i++) {
-      currentSum += this.transitArray[i][4];
+    const transitArraySums = new Array(this.transitMatrix.length);
+    for (let i = 0; i < this.transitMatrix.length; i++) {
+      currentSum += this.transitMatrix[i][4];
       transitArraySums[i] = currentSum;
     }
 
-    this.newCentroid = [];
-    if (this.transitArray.length < numClusters) {
-      this.newCentroid = this.transitArray;
+    this.centroid = [];
+    if (this.transitMatrix.length < numClusters) {
+      this.centroid = this.transitMatrix;
     } else {
-      this.newCentroid = new Array(numClusters);
-      for (let i = 0; i < this.newCentroid.length; i++) {
+      this.centroid = new Array(numClusters);
+      for (let i = 0; i < this.centroid.length; i++) {
         const randomWeight = Math.floor(Math.random() * totalWeight);
-        for (let j = 0; j < this.transitArray.length; j++) {
+        for (let j = 0; j < this.transitMatrix.length; j++) {
           if (transitArraySums[j] >= randomWeight
-              && this.newCentroid.indexOf(this.transitArray[j]) < 0) {
-            this.newCentroid[i] = this.transitArray[j];
+              && this.centroid.indexOf(this.transitMatrix[j]) < 0) {
+            this.centroid[i] = this.transitMatrix[j];
             break;
           }
         }
       }
 
       // Delete falsy elements ('', 0, NaN, null, undefined, false)
-      this.newCentroid = this.newCentroid.filter((e) => e);
+      this.centroid = this.centroid.filter((e) => e);
     }
 
-    if (this.transitArray.length > 0) {
-      this.result = this.splitIntoGroups();
+    if (this.transitMatrix.length > 0) {
+      this.splitIntoGroups();
     }
   }
 
   /**
    * Calculate the distance between each line and each cluster center. Split
-   * lines into a number of cluster groups cluster groups.
+   * lines into a number of cluster groups.
    */
   splitIntoGroups() {
     const transitArrayWithClusters = {};
-    for (let i = 0; i < this.newCentroid.length; i++) {
+    for (let i = 0; i < this.centroid.length; i++) {
       transitArrayWithClusters[i] = [];
     }
 
-    this.result = new Array(this.transitArray.length);
-    for (let i = 0; i < this.transitArray.length; i++) {
+    const result = new Array(this.transitMatrix.length);
+    for (let i = 0; i < this.transitMatrix.length; i++) {
       let group = 0;
       let minDist = Number.POSITIVE_INFINITY;
-      for (let j = 0; j < this.newCentroid.length; j++) {
+      for (let j = 0; j < this.centroid.length; j++) {
         // Euclidean distance
         const currentDist = Math.sqrt(
-            Math.pow(this.transitArray[i][0] - this.newCentroid[j][0], 2) +
-            Math.pow(this.transitArray[i][1] - this.newCentroid[j][1], 2) +
-            Math.pow(this.transitArray[i][2] - this.newCentroid[j][2], 2) +
-            Math.pow(this.transitArray[i][3] - this.newCentroid[j][3], 2)
+            Math.pow(this.transitMatrix[i][0] - this.centroid[j][0], 2) +
+            Math.pow(this.transitMatrix[i][1] - this.centroid[j][1], 2) +
+            Math.pow(this.transitMatrix[i][2] - this.centroid[j][2], 2) +
+            Math.pow(this.transitMatrix[i][3] - this.centroid[j][3], 2)
         );
 
         if (currentDist < minDist) {
@@ -239,21 +268,22 @@ export default class AppModel extends Model {
         }
       }
 
-      this.result[i] = group;
+      result[i] = group;
     }
 
-    for (let i = 0; i < this.transitArray.length; i++) {
-      transitArrayWithClusters[this.result[i]].push(this.transitArray[i]);
+    for (let i = 0; i < this.transitMatrix.length; i++) {
+      transitArrayWithClusters[result[i]].push(this.transitMatrix[i]);
     }
-    this.findNewCentroid(transitArrayWithClusters);
-    this.redrawClusters(this.newCentroid);
+    this.centroid = AppModel.findNewCentroid(transitArrayWithClusters);
+    AppModel.redrawFlowLines(this.centroid);
   }
 
   /**
    * @param {{}} transitArrayWithClusters
+   * @return {[]}
    */
-  findNewCentroid(transitArrayWithClusters) {
-    this.newCentroid = [];
+  static findNewCentroid(transitArrayWithClusters) {
+    const newCentroid = [];
     for (const [key] of Object.entries(transitArrayWithClusters)) {
       let weight = 0;
       let destX = 0;
@@ -272,14 +302,15 @@ export default class AppModel extends Model {
           weight = newWeight;
         }
       }
-      this.newCentroid.push([origX, origY, destX, destY, weight, key]);
+      newCentroid.push([origX, origY, destX, destY, weight, key]);
     }
+    return newCentroid;
   }
 
   /**
    * @param {[]} centroid
    */
-  redrawClusters(centroid) {
+  static redrawFlowLines(centroid) {
     let minValue = Number.MAX_VALUE;
     let maxValue = 0;
     for (let i = 0; i < centroid.length; i++) {
