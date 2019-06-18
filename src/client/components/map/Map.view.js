@@ -108,6 +108,20 @@ export default class MapView extends View {
 
     this.lineLayers.push(line[5]);
 
+    let colourStyling = null;
+    let baseWidth = null;
+    if (min === max) {
+      colourStyling = '#ff0000';
+      baseWidth = 1000;
+    } else {
+      colourStyling = [
+        'interpolate', ['linear'], ['get', 'magnitude'],
+        min, '#ffffff',
+        max, '#ff0000',
+      ];
+      baseWidth = Math.max(1000 * ((line[4] - min) / (max - min)), 200);
+    }
+
     this.map.addLayer({
       'id': line[5],
       'type': 'line',
@@ -117,7 +131,7 @@ export default class MapView extends View {
           'type': 'Feature',
           'properties': {
             'magnitude': line[4],
-            'base-width': Math.max(1000 * ((line[4] - min) / (max - min)), 200),
+            'base-width': baseWidth,
           },
           'geometry': {
             'type': 'LineString',
@@ -126,11 +140,7 @@ export default class MapView extends View {
         },
       },
       'paint': {
-        'line-color': [
-          'interpolate', ['linear'], ['get', 'magnitude'],
-          min, '#ffffff',
-          max, '#ff0000',
-        ],
+        'line-color': colourStyling,
         'line-width': [
           'interpolate', ['exponential', 2], ['zoom'],
           0, ['*', ['get', 'base-width'], ['^', 2, -16]],
