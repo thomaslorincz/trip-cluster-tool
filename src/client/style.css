@@ -55,6 +55,7 @@ body {
   flex-direction: row;
   align-content: center;
   font-size: 16px;
+  user-select: none;
 }
 
 .title-icon {
@@ -129,11 +130,21 @@ body {
   vertical-align: middle;
   margin: 0 4px;
   cursor: pointer;
+  user-select: none;
+}
+
+.content.selected > .content-text {
+  color: blue;
+  font-weight: bold;
 }
 
 .selected-text {
   color: blue;
   font-weight: bold;
+}
+
+.content-number {
+  width: 24px;
 }
 
 .content-radio-button {
