@@ -14,73 +14,55 @@ export default class ControlPanelView extends View {
 
     this.iterationNumber = document.getElementById('iteration-number');
 
-    this.nextIterationButton = document.getElementById('next-iteration');
+    this.nextIterationButton = document.getElementById('next-iteration-button');
     this.nextIterationButton.addEventListener('click', () => {
       this.container.dispatchEvent(new CustomEvent('nextIterationClicked'));
     });
 
-    this.autoIterateSwitch = document.getElementById('auto-iterate-switch');
-    this.autoIterateSwitch.addEventListener('click', () => {
+    this.autoIterateButton = document.getElementById('auto-iterate-button');
+    this.autoIterateButton.addEventListener('click', () => {
       this.container.dispatchEvent(new CustomEvent('autoIterateClicked'));
     });
 
-    this.clusterNumber = document.getElementById('cluster-number');
-
-    this.clusterSlider = document.getElementById('cluster-slider');
-    this.clusterSlider.addEventListener('input', (event) => {
-      this.container.dispatchEvent(new CustomEvent('clusterInput', {
-        detail: event.target.valueAsNumber,
-      }));
+    this.flowLinesDecrement = document.getElementById('flow-lines-decrement');
+    this.flowLinesDecrement.addEventListener('click', () => {
+      this.container.dispatchEvent(new CustomEvent('decrementClicked'));
     });
 
-    this.runAgainButton = document.getElementById('run-again-button');
-    this.runAgainButton.addEventListener('click', () => {
-      this.container.dispatchEvent(new CustomEvent('runAgainClicked'));
-    });
+    this.numFlowLines = document.getElementById('flow-lines');
 
-    this.datasetRadioButtons = document.getElementsByName('dataset');
-    this.datasetRadioButtons.forEach((radioButton) => {
-      radioButton.addEventListener('change', (event) => {
-        this.container.dispatchEvent(new CustomEvent('datasetClicked', {
-          detail: event.target.value,
-        }));
-      });
-    });
-
-    this.purposeRadioButtons = document.getElementsByName('purpose');
-    this.purposeRadioButtons.forEach((radioButton) => {
-      radioButton.addEventListener('change', (event) => {
-        this.container.dispatchEvent(new CustomEvent('purposeClicked', {
-          detail: event.target.value,
-        }));
-      });
+    this.flowLinesIncrement = document.getElementById('flow-lines-increment');
+    this.flowLinesIncrement.addEventListener('click', () => {
+      this.container.dispatchEvent(new CustomEvent('incrementClicked'));
     });
   }
 
   /**
    * @param {object} settings
-   * @param {string} settings.district
+   * @param {number} settings.district
    * @param {number} settings.iteration
    * @param {boolean} settings.autoIterate
-   * @param {number} settings.clusters
+   * @param {number} settings.flowLines
    * @param {string} settings.dataset
    * @param {string} settings.purpose
    */
   draw(settings) {
-    if (settings.district === '') {
+    if (settings.district === -1) {
       this.selectedGeography.innerText = 'Nothing Selected';
+      this.selectedGeography.classList.remove('blue-text');
     } else {
       this.selectedGeography.innerText = `District ${settings.district}`;
+      this.selectedGeography.classList.add('blue-text');
     }
 
     this.iterationNumber.innerText = settings.iteration.toString();
 
     if (settings.autoIterate) {
-      this.autoIterateSwitch.classList.add('enabled');
+      this.autoIterateButton.classList.add('pressed');
     } else {
-      this.autoIterateSwitch.classList.remove('enabled');
+      this.autoIterateButton.classList.remove('pressed');
     }
 
-    this.clusterNumber.innerText = settings.clusters.toString();
+    this.numFlowLines.innerText = settings.flowLines.toString();
   }
 }
