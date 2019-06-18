@@ -35,34 +35,98 @@ export default class ControlPanelView extends View {
     this.flowLinesIncrement.addEventListener('click', () => {
       this.container.dispatchEvent(new CustomEvent('incrementClicked'));
     });
+
+    this.boundaryEntries = document.querySelectorAll('.boundary-entry');
+    this.boundaryEntries.forEach((entry) => {
+      entry.addEventListener('click', (event) => {
+        this.container.dispatchEvent(new CustomEvent('boundaryClicked', {
+          detail: event.target.dataset.value,
+        }));
+      });
+    });
+
+    this.modeEntries = document.querySelectorAll('.mode-entry');
+    this.modeEntries.forEach((entry) => {
+      entry.addEventListener('click', (event) => {
+        this.container.dispatchEvent(new CustomEvent('modeClicked', {
+          detail: event.target.dataset.value,
+        }));
+      });
+    });
+
+    this.purposeEntries = document.querySelectorAll('.purpose-entry');
+    this.purposeEntries.forEach((entry) => {
+      entry.addEventListener('click', (event) => {
+        this.container.dispatchEvent(new CustomEvent('purposeClicked', {
+          detail: event.target.dataset.value,
+        }));
+      });
+    });
   }
 
   /**
-   * @param {object} settings
-   * @param {number} settings.district
-   * @param {number} settings.iteration
-   * @param {boolean} settings.autoIterate
-   * @param {number} settings.flowLines
-   * @param {string} settings.dataset
-   * @param {string} settings.purpose
+   * @param {number} district
+   * @param {number} iteration
+   * @param {boolean} autoIterate
+   * @param {number} flowLines
+   * @param {string} boundary
+   * @param {string} mode
+   * @param {string} purpose
    */
-  draw(settings) {
-    if (settings.district === -1) {
+  draw({district, iteration, autoIterate, flowLines, boundary, mode,
+    purpose}) {
+    if (district === -1) {
       this.selectedGeography.innerText = 'Nothing Selected';
-      this.selectedGeography.classList.remove('blue-text');
+      this.selectedGeography.classList.remove('selected-text');
     } else {
-      this.selectedGeography.innerText = `District ${settings.district}`;
-      this.selectedGeography.classList.add('blue-text');
+      if (boundary === 'district') {
+        this.selectedGeography.innerText = `District ${district}`;
+      } else {
+        this.selectedGeography.innerText = `Zone ${district}`;
+      }
+      this.selectedGeography.classList.add('selected-text');
     }
 
-    this.iterationNumber.innerText = settings.iteration.toString();
+    this.iterationNumber.innerText = iteration.toString();
+    if (iteration === 0) {
+      this.iterationNumber.classList.remove('selected-text');
+    } else {
+      this.iterationNumber.classList.add('selected-text');
+    }
 
-    if (settings.autoIterate) {
+    if (autoIterate) {
       this.autoIterateButton.classList.add('pressed');
     } else {
       this.autoIterateButton.classList.remove('pressed');
     }
 
-    this.numFlowLines.innerText = settings.flowLines.toString();
+    this.numFlowLines.innerText = flowLines.toString();
+
+    document.querySelectorAll('.content.selected').forEach((content) => {
+      const radioButton = content.querySelector('.content-radio-button');
+      radioButton.innerHTML = 'radio_button_unchecked';
+      content.classList.remove('selected');
+    });
+
+    const selectedBoundary = document.getElementById(`boundary-${boundary}`);
+    if (selectedBoundary) {
+      selectedBoundary.querySelector('.content-radio-button').innerHTML
+          = 'radio_button_checked';
+      selectedBoundary.classList.add('selected');
+    }
+
+    const selectedMode = document.getElementById(`mode-${mode}`);
+    if (selectedMode) {
+      selectedMode.querySelector('.content-radio-button').innerHTML
+          = 'radio_button_checked';
+      selectedMode.classList.add('selected');
+    }
+
+    const selectedPurpose = document.getElementById(`purpose-${purpose}`);
+    if (selectedPurpose) {
+      selectedPurpose.querySelector('.content-radio-button').innerHTML
+          = 'radio_button_checked';
+      selectedPurpose.classList.add('selected');
+    }
   }
 }

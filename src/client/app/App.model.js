@@ -14,7 +14,8 @@ export default class AppModel extends Model {
       iteration: 0,
       autoIterate: false,
       flowLines: 10,
-      dataset: 'total',
+      boundary: 'district',
+      mode: 'total',
       purpose: 'W',
     };
 
@@ -87,6 +88,10 @@ export default class AppModel extends Model {
         dataOfThisTravelType.push(thisDataArray);
       }
       this.totalDataMatrix[thisTravelType] = dataOfThisTravelType;
+
+      document.dispatchEvent(new CustomEvent('controlsUpdated', {
+        detail: this.controlPanel,
+      }));
     }).catch((error) => {
       console.log(error);
     });
@@ -98,22 +103,6 @@ export default class AppModel extends Model {
     this.selectedMatrix = this.totalDataMatrix;
 
     this.autoIterateInterval = null;
-  }
-
-  /**
-   * @param {object} settings
-   * @param {string} settings.district
-   * @param {number} settings.iteration
-   * @param {boolean} settings.autoIterate
-   * @param {number} settings.flowLines
-   * @param {string} settings.dataset
-   * @param {string} settings.purpose
-   */
-  updateControlPanel(settings) {
-    this.controlPanel = {...settings};
-    document.dispatchEvent(new CustomEvent('controlsUpdated', {
-      detail: this.controlPanel,
-    }));
   }
 
   /**
@@ -139,10 +128,26 @@ export default class AppModel extends Model {
   }
 
   /**
+   * Runs an iteration of the k-means clustering algorithm.
+   */
+  nextIteration() {
+    this.controlPanel.iteration++;
+    document.dispatchEvent(new CustomEvent('controlsUpdated', {
+      detail: this.controlPanel,
+    }));
+    this.splitIntoGroups();
+  }
+
+  /**
    * Continuously runs new iterations while thr auto-iterate toggle switch is
    * toggled on.
    */
   autoIterate() {
+    this.controlPanel.autoIterate = !this.controlPanel.autoIterate;
+    document.dispatchEvent(new CustomEvent('controlsUpdated', {
+      detail: this.controlPanel,
+    }));
+
     if (this.controlPanel.autoIterate) {
       this.autoIterateInterval = setInterval(() => {
         this.controlPanel.iteration++;
@@ -182,6 +187,51 @@ export default class AppModel extends Model {
         detail: this.controlPanel,
       }));
     }
+  }
+
+  /**
+   * @param {string} boundary
+   */
+  updateBoundary(boundary) {
+    this.controlPanel.district = -1;
+    this.controlPanel.iteration = 0;
+    this.controlPanel.boundary = boundary;
+    document.dispatchEvent(new CustomEvent('selectedUpdated', {
+      detail: this.controlPanel.district,
+    }));
+    document.dispatchEvent(new CustomEvent('controlsUpdated', {
+      detail: this.controlPanel,
+    }));
+  }
+
+  /**
+   * @param {string} mode
+   */
+  updateMode(mode) {
+    this.controlPanel.iteration = 0;
+    this.controlPanel.mode = mode;
+    document.dispatchEvent(new CustomEvent('controlsUpdated', {
+      detail: this.controlPanel,
+    }));
+    this.processData(
+        this.controlPanel.purpose,
+        this.controlPanel.flowLines
+    );
+  }
+
+  /**
+   * @param {string} purpose
+   */
+  updatePurpose(purpose) {
+    this.controlPanel.iteration = 0;
+    this.controlPanel.purpose = purpose;
+    document.dispatchEvent(new CustomEvent('controlsUpdated', {
+      detail: this.controlPanel,
+    }));
+    this.processData(
+        this.controlPanel.purpose,
+        this.controlPanel.flowLines
+    );
   }
 
   /**

@@ -17,55 +17,31 @@ export default class ControlPanelPresenter extends Presenter {
     });
 
     this.view.container.addEventListener('nextIterationClicked', () => {
-      const newSettings = {...this.model.controlPanel};
-      newSettings.iteration++;
-      this.model.updateControlPanel(newSettings);
-      this.model.splitIntoGroups();
+      this.model.nextIteration();
     });
 
     this.view.container.addEventListener('autoIterateClicked', () => {
-      const newSettings = {...this.model.controlPanel};
-      newSettings.autoIterate = !this.model.controlPanel.autoIterate;
-      this.model.updateControlPanel(newSettings);
       this.model.autoIterate();
     });
 
-    this.view.container.addEventListener('clusterInput', (event) => {
-      const newSettings = {...this.model.controlPanel};
-      newSettings.clusters = event.detail;
-      this.model.updateControlPanel(newSettings);
+    this.view.container.addEventListener('decrementClicked', () => {
+      this.model.decrementFlowLines();
     });
 
-    this.view.container.addEventListener('runAgainClicked', () => {
-      const newSettings = {...this.model.controlPanel};
-      newSettings.iteration = 0;
-      this.model.updateControlPanel(newSettings);
-      this.model.processData(
-          this.model.controlPanel.purpose,
-          this.model.controlPanel.clusters
-      );
+    this.view.container.addEventListener('incrementClicked', () => {
+      this.model.incrementFlowLines();
     });
 
-    this.view.container.addEventListener('datasetClicked', (event) => {
-      const newSettings = {...this.model.controlPanel};
-      newSettings.iteration = 0;
-      newSettings.dataset = event.detail;
-      this.model.updateControlPanel(newSettings);
-      this.model.processData(
-          this.model.controlPanel.purpose,
-          this.model.controlPanel.clusters
-      );
+    this.view.container.addEventListener('boundaryClicked', (event) => {
+      this.model.updateBoundary(event.detail);
+    });
+
+    this.view.container.addEventListener('modeClicked', (event) => {
+      this.model.updateMode(event.detail);
     });
 
     this.view.container.addEventListener('purposeClicked', (event) => {
-      const newSettings = {...this.model.controlPanel};
-      newSettings.iteration = 0;
-      newSettings.purpose = event.detail;
-      this.model.updateControlPanel(newSettings);
-      this.model.processData(
-          this.model.controlPanel.purpose,
-          this.model.controlPanel.clusters
-      );
+      this.model.updatePurpose(event.detail);
     });
   }
 }

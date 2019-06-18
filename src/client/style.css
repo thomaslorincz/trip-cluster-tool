@@ -131,6 +131,7 @@ body {
   margin: 0 4px;
   cursor: pointer;
   user-select: none;
+  pointer-events: none;
 }
 
 .content.selected > .content-text {
@@ -153,8 +154,13 @@ body {
   border-radius: 12px;
   background-color: transparent;
   transition: background-color 250ms ease;
+  pointer-events: none;
 }
 
 .content:hover > .content-radio-button {
   background-color: gainsboro;
+}
+
+.entry {
+  cursor: pointer;
 }
