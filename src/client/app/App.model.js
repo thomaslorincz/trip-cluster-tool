@@ -9,10 +9,8 @@ export default class AppModel extends Model {
   constructor() {
     super();
 
-    this.selected = null;
-
     this.controlPanel = {
-      district: '',
+      district: -1,
       iteration: 0,
       autoIterate: false,
       clusters: 10,
@@ -121,17 +119,22 @@ export default class AppModel extends Model {
    * @param {number} districtId
    */
   geographySelected(districtId) {
-    this.selected = districtId;
-    this.controlPanel.district = districtId.toString();
-    document.dispatchEvent(new CustomEvent('selectedUpdated', {
-      detail: this.selected,
-    }));
+    if (this.controlPanel.district === districtId) {
+      this.controlPanel.district = -1;
+      this.controlPanel.iteration = 0;
+      document.dispatchEvent(new CustomEvent('removeFlowLines'));
+    } else {
+      this.controlPanel.district = districtId;
+      this.controlPanel.iteration = 1;
+      this.processData(this.controlPanel.purpose, this.controlPanel.flowLines);
+    }
 
-    this.controlPanel.iteration = 1;
+    document.dispatchEvent(new CustomEvent('selectedUpdated', {
+      detail: this.controlPanel.district,
+    }));
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
     }));
-    this.processData(this.controlPanel.purpose, this.controlPanel.clusters);
   }
 
   /**
@@ -164,14 +167,10 @@ export default class AppModel extends Model {
     let totalWeight = 0;
     this.transitArray = [];
 
-    if (this.controlPanel.district === 'all') {
-      this.transitArray = this.selectedMatrix[purpose];
-    } else {
-      const purposeArray = this.selectedMatrix[purpose];
-      for (let i = 0; i < purposeArray.length; i++) {
-        if (Number(purposeArray[i][8]) === Number(this.controlPanel.district)) {
-          this.transitArray.push(purposeArray[i]);
-        }
+    const purposeArray = this.selectedMatrix[purpose];
+    for (let i = 0; i < purposeArray.length; i++) {
+      if (Number(purposeArray[i][8]) === this.controlPanel.district) {
+        this.transitArray.push(purposeArray[i]);
       }
     }
 
