@@ -23,6 +23,22 @@
     "url": "git+https://github.com/thomaslorincz/trip-cluster-tool.git"
   },
   "author": "City of Edmonton - Urban Analysis",
+  "contributors": [
+    {
+      "name": "Thomas Lorincz",
+      "email": "thomas.lorincz@edmonton.ca",
+      "url": "https://github.com/thomaslorincz"
+    },
+    {
+      "name": "Jingyuan Wang",
+      "email": "jingyuan.wang@edmonton.ca",
+      "url": "https://github.com/Jingyuanisxzs"
+    },
+    {
+      "name": "Yue Ma",
+      "url": "https://github.com/yueMaHello"
+    }
+  ],
   "license": "UNLICENSED",
   "bugs": {
     "url": "https://github.com/thomaslorincz/trip-cluster-tool/issues"
