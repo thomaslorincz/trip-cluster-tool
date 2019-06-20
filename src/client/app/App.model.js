@@ -25,8 +25,8 @@ export default class AppModel extends Model {
     this.transitDataMatrix = {};
 
     Promise.all([
-      d3.csv('data/result_total.csv'),
-      d3.csv('data/result_transit.csv'),
+      d3.csv('assets/data/result_total.csv'),
+      d3.csv('assets/data/result_transit.csv'),
     ]).then(([totalData, transitData]) => {
       const csvHeaders = {
         origin_zone: 'OriginZoneTAZ1669EETP',
