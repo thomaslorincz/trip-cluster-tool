@@ -68,12 +68,12 @@ export default class ControlPanelView extends View {
    * @param {number} district
    * @param {number} iteration
    * @param {boolean} autoIterate
-   * @param {number} flowLines
+   * @param {number} numFlowLines
    * @param {string} boundary
    * @param {string} mode
    * @param {string} purpose
    */
-  draw({district, iteration, autoIterate, flowLines, boundary, mode,
+  draw({district, iteration, autoIterate, numFlowLines, boundary, mode,
     purpose}) {
     if (district === -1) {
       this.selectedGeography.innerText = 'Nothing Selected';
@@ -100,7 +100,7 @@ export default class ControlPanelView extends View {
       this.autoIterateButton.classList.remove('pressed');
     }
 
-    this.numFlowLines.innerText = flowLines.toString();
+    this.numFlowLines.innerText = numFlowLines.toString();
 
     document.querySelectorAll('.content.selected').forEach((content) => {
       const radioButton = content.querySelector('.content-radio-button');
