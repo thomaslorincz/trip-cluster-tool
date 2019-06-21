@@ -1,5 +1,6 @@
 import Model from '../superclasses/Model';
 import * as d3 from 'd3-fetch';
+import FlowLine from '../lib/FlowLine';
 
 /**
  * Model that stores and controls the app's data and state.
@@ -13,7 +14,7 @@ export default class AppModel extends Model {
       district: -1,
       iteration: 0,
       autoIterate: false,
-      flowLines: 10,
+      numFlowLines: 10,
       boundary: 'district',
       mode: 'total',
       purpose: 'W',
@@ -25,82 +26,56 @@ export default class AppModel extends Model {
     this.transitDataMatrix = {};
 
     Promise.all([
-      d3.csv('assets/data/result_total.csv'),
-      d3.csv('assets/data/result_transit.csv'),
+      d3.csv('assets/data/result_total_proj.csv'),
+      d3.csv('assets/data/result_transit_proj.csv'),
     ]).then(([totalData, transitData]) => {
-      const csvHeaders = {
-        origin_zone: 'OriginZoneTAZ1669EETP',
-        origin_district: 'OriginZoneDistrictTAZ1669EETP',
-        origin_x: 'Origin_XCoord',
-        origin_y: 'Origin_YCoord',
-        dest_zone: 'DestZoneTAZ1669EETP',
-        dest_district: 'DestZoneDistrictTAZ1669EETP',
-        dest_x: 'Dest_XCoord',
-        dest_y: 'Dest_YCoord',
-        weight: 'Total',
-      };
-
-      const uniqueTripTypes = [transitData[0]['Purpose_Category']];
-
-      let thisTravelType = uniqueTripTypes[0];
-      let dataOfThisTravelType = [];
-      for (let j = 0; j < transitData.length; j++) {
-        if (transitData[j]['Purpose_Category'] !== thisTravelType) {
-          this.transitDataMatrix[thisTravelType] = dataOfThisTravelType;
-          thisTravelType = transitData[j]['Purpose_Category'];
-          uniqueTripTypes.push(thisTravelType);
-          dataOfThisTravelType = [];
+      for (let i = 0; i < transitData.length; i++) {
+        const transitDatum = transitData[i];
+        if (!(transitDatum['purpose'] in this.transitDataMatrix)) {
+          this.transitDataMatrix[transitDatum['purpose']] = [];
         }
-        const thisDataArray = [
-          Number(transitData[j][csvHeaders.origin_x]),
-          Number(transitData[j][csvHeaders.origin_y]),
-          Number(transitData[j][csvHeaders.dest_x]),
-          Number(transitData[j][csvHeaders.dest_y]),
-          Number(transitData[j][csvHeaders.weight]),
-          transitData[j][csvHeaders.origin_zone],
-          transitData[j][csvHeaders.dest_zone],
-          transitData[j][csvHeaders.origin_district],
-          transitData[j][csvHeaders.dest_district],
-        ];
-        dataOfThisTravelType.push(thisDataArray);
-      }
-      this.transitDataMatrix[thisTravelType] = dataOfThisTravelType;
 
-      thisTravelType = uniqueTripTypes[0];
-      dataOfThisTravelType = [];
-      for (let j = 0; j < totalData.length; j++) {
-        if (totalData[j]['Purpose_Category'] !== thisTravelType) {
-          this.totalDataMatrix[thisTravelType] = dataOfThisTravelType;
-          thisTravelType = totalData[j]['Purpose_Category'];
-          dataOfThisTravelType = [];
-        }
-        const thisDataArray = [
-          Number(totalData[j][csvHeaders.origin_x]),
-          Number(totalData[j][csvHeaders.origin_y]),
-          Number(totalData[j][csvHeaders.dest_x]),
-          Number(totalData[j][csvHeaders.dest_y]),
-          Number(totalData[j][csvHeaders.weight]),
-          totalData[j][csvHeaders.origin_zone],
-          totalData[j][csvHeaders.dest_zone],
-          totalData[j][csvHeaders.origin_district],
-          totalData[j][csvHeaders.dest_district],
-        ];
-        dataOfThisTravelType.push(thisDataArray);
+        this.transitDataMatrix[transitDatum['purpose']].push({
+          originLon: parseFloat(transitDatum['origin_lon']),
+          originLat: parseFloat(transitDatum['origin_lat']),
+          destLon: parseFloat(transitDatum['dest_lon']),
+          destLat: parseFloat(transitDatum['dest_lat']),
+          weight: parseInt(transitDatum['weight']),
+          originZone: parseInt(transitDatum['origin_zone']),
+          destZone: parseInt(transitDatum['dest_zone']),
+          originDistrict: parseInt(transitDatum['origin_district']),
+          destDistrict: parseInt(transitDatum['dest_district']),
+        });
       }
-      this.totalDataMatrix[thisTravelType] = dataOfThisTravelType;
+
+      for (let i = 0; i < totalData.length; i++) {
+        const totalDatum = totalData[i];
+        if (!(totalDatum['purpose'] in this.totalDataMatrix)) {
+          this.totalDataMatrix[totalDatum['purpose']] = [];
+        }
+
+        this.totalDataMatrix[totalDatum['purpose']].push({
+          originLon: parseFloat(totalDatum['origin_lon']),
+          originLat: parseFloat(totalDatum['origin_lat']),
+          destLon: parseFloat(totalDatum['dest_lon']),
+          destLat: parseFloat(totalDatum['dest_lat']),
+          weight: parseInt(totalDatum['weight']),
+          originZone: parseInt(totalDatum['origin_zone']),
+          destZone: parseInt(totalDatum['dest_zone']),
+          originDistrict: parseInt(totalDatum['origin_district']),
+          destDistrict: parseInt(totalDatum['dest_district']),
+        });
+      }
 
       document.dispatchEvent(new CustomEvent('controlsUpdated', {
         detail: this.controlPanel,
       }));
-    }).catch((error) => {
-      console.log(error);
     });
 
-    this.centroid = [];
-    this.transitMatrix = [];
+    /** @type {FlowLine[]} */
+    this.flowLines = [];
 
-    // Total selected by default
-    this.selectedMatrix = this.totalDataMatrix;
+    this.flowMatrix = [];
 
     this.autoIterateInterval = null;
   }
@@ -116,7 +91,19 @@ export default class AppModel extends Model {
     } else {
       this.controlPanel.district = districtId;
       this.controlPanel.iteration = 1;
-      this.processData(this.controlPanel.purpose, this.controlPanel.flowLines);
+      if (this.controlPanel.mode === 'total') {
+        this.processData(
+            this.totalDataMatrix,
+            this.controlPanel.purpose,
+            this.controlPanel.numFlowLines
+        );
+      } else {
+        this.processData(
+            this.transitDataMatrix,
+            this.controlPanel.purpose,
+            this.controlPanel.numFlowLines
+        );
+      }
     }
 
     document.dispatchEvent(new CustomEvent('selectedUpdated', {
@@ -165,10 +152,22 @@ export default class AppModel extends Model {
    * Decreases the number of flow lines by 1
    */
   decrementFlowLines() {
-    if (this.controlPanel.flowLines > 1) {
-      this.controlPanel.flowLines--;
+    if (this.controlPanel.numFlowLines > 1) {
+      this.controlPanel.numFlowLines--;
       this.controlPanel.iteration = 1;
-      this.processData(this.controlPanel.purpose, this.controlPanel.flowLines);
+      if (this.controlPanel.mode === 'total') {
+        this.processData(
+            this.totalDataMatrix,
+            this.controlPanel.purpose,
+            this.controlPanel.numFlowLines
+        );
+      } else {
+        this.processData(
+            this.transitDataMatrix,
+            this.controlPanel.purpose,
+            this.controlPanel.numFlowLines
+        );
+      }
       document.dispatchEvent(new CustomEvent('controlsUpdated', {
         detail: this.controlPanel,
       }));
@@ -179,10 +178,22 @@ export default class AppModel extends Model {
    * Increases the number of flow lines by 1
    */
   incrementFlowLines() {
-    if (this.controlPanel.flowLines !== this.maxFlowLines) {
-      this.controlPanel.flowLines++;
+    if (this.controlPanel.numFlowLines !== this.maxFlowLines) {
+      this.controlPanel.numFlowLines++;
       this.controlPanel.iteration = 1;
-      this.processData(this.controlPanel.purpose, this.controlPanel.flowLines);
+      if (this.controlPanel.mode === 'total') {
+        this.processData(
+            this.totalDataMatrix,
+            this.controlPanel.purpose,
+            this.controlPanel.numFlowLines
+        );
+      } else {
+        this.processData(
+            this.transitDataMatrix,
+            this.controlPanel.purpose,
+            this.controlPanel.numFlowLines
+        );
+      }
       document.dispatchEvent(new CustomEvent('controlsUpdated', {
         detail: this.controlPanel,
       }));
@@ -213,10 +224,19 @@ export default class AppModel extends Model {
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
     }));
-    this.processData(
-        this.controlPanel.purpose,
-        this.controlPanel.flowLines
-    );
+    if (this.controlPanel.mode === 'total') {
+      this.processData(
+          this.totalDataMatrix,
+          this.controlPanel.purpose,
+          this.controlPanel.numFlowLines
+      );
+    } else {
+      this.processData(
+          this.transitDataMatrix,
+          this.controlPanel.purpose,
+          this.controlPanel.numFlowLines
+      );
+    }
   }
 
   /**
@@ -228,89 +248,115 @@ export default class AppModel extends Model {
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
     }));
-    this.processData(
-        this.controlPanel.purpose,
-        this.controlPanel.flowLines
-    );
+    if (this.controlPanel.mode === 'total') {
+      this.processData(
+          this.totalDataMatrix,
+          this.controlPanel.purpose,
+          this.controlPanel.numFlowLines
+      );
+    } else {
+      this.processData(
+          this.transitDataMatrix,
+          this.controlPanel.purpose,
+          this.controlPanel.numFlowLines
+      );
+    }
   }
 
   /**
    * K-means initialization. This is different from traditional K-means.
    * It gives a higher possibility to lines with a higher weight to be chosen as
-   * an initial cluster center. The algorithm is based on
-   * https://medium.com/@peterkellyonline/weighted-random-selection-3ff222917eb6
+   * an initial cluster center.
+   * @see https://medium.com/@peterkellyonline/weighted-random-selection-3ff222917eb6
+   * @param {[]} dataMatrix
    * @param {string} purpose
-   * @param {number} numClusters
+   * @param {number} numFlowLines
    */
-  processData(purpose, numClusters) {
+  processData(dataMatrix, purpose, numFlowLines) {
     let totalWeight = 0;
-    this.transitMatrix = [];
+    this.flowMatrix = [];
 
-    const purposeArray = this.selectedMatrix[purpose];
+    const purposeArray = dataMatrix[purpose];
     for (let i = 0; i < purposeArray.length; i++) {
-      if (Number(purposeArray[i][8]) === this.controlPanel.district) {
-        this.transitMatrix.push(purposeArray[i]);
+      if (purposeArray[i].destDistrict === this.controlPanel.district) {
+        this.flowMatrix.push(purposeArray[i]);
       }
     }
 
-    for (let i = 0; i < this.transitMatrix.length; i++) {
-      totalWeight += this.transitMatrix[i][4];
+    for (let i = 0; i < this.flowMatrix.length; i++) {
+      totalWeight += this.flowMatrix[i].weight;
     }
 
     let currentSum = 0;
-    const transitArraySums = new Array(this.transitMatrix.length);
-    for (let i = 0; i < this.transitMatrix.length; i++) {
-      currentSum += this.transitMatrix[i][4];
+    const transitArraySums = new Array(this.flowMatrix.length);
+    for (let i = 0; i < this.flowMatrix.length; i++) {
+      currentSum += this.flowMatrix[i].weight;
       transitArraySums[i] = currentSum;
     }
 
-    this.centroid = [];
-    if (this.transitMatrix.length < numClusters) {
-      this.centroid = this.transitMatrix;
+    this.flowLines = [];
+    if (this.flowMatrix.length < numFlowLines) {
+      this.flowLines = [...this.flowMatrix];
     } else {
-      this.centroid = new Array(numClusters);
-      for (let i = 0; i < this.centroid.length; i++) {
+      this.flowLines = new Array(numFlowLines);
+      for (let i = 0; i < this.flowLines.length; i++) {
         const randomWeight = Math.floor(Math.random() * totalWeight);
-        for (let j = 0; j < this.transitMatrix.length; j++) {
+        for (let j = 0; j < this.flowMatrix.length; j++) {
           if (transitArraySums[j] >= randomWeight
-              && this.centroid.indexOf(this.transitMatrix[j]) < 0) {
-            this.centroid[i] = this.transitMatrix[j];
+              && this.flowLines.indexOf(this.flowMatrix[j]) === -1) {
+            this.flowLines[i] = this.flowMatrix[j];
             break;
           }
         }
       }
 
       // Delete falsy elements ('', 0, NaN, null, undefined, false)
-      this.centroid = this.centroid.filter((e) => e);
+      this.flowLines = this.flowLines.filter((e) => e);
     }
 
-    if (this.transitMatrix.length > 0) {
+    if (this.flowMatrix.length > 0) {
       this.splitIntoGroups();
     }
   }
 
   /**
-   * Calculate the distance between each line and each cluster center. Split
+   * Calculate the distance between each line end and each cluster center. Split
    * lines into a number of cluster groups.
    */
   splitIntoGroups() {
-    const transitArrayWithClusters = {};
-    for (let i = 0; i < this.centroid.length; i++) {
-      transitArrayWithClusters[i] = [];
+    const flowMatrixWithClusters = {};
+    for (let i = 0; i < this.flowLines.length; i++) {
+      flowMatrixWithClusters[i] = [];
     }
 
-    const result = new Array(this.transitMatrix.length);
-    for (let i = 0; i < this.transitMatrix.length; i++) {
+    const result = new Array(this.flowMatrix.length);
+    for (let i = 0; i < this.flowMatrix.length; i++) {
+      /** @type {FlowLine} */
+      const datum = this.flowMatrix[i];
       let group = 0;
       let minDist = Number.POSITIVE_INFINITY;
-      for (let j = 0; j < this.centroid.length; j++) {
-        // Euclidean distance
-        const currentDist = Math.sqrt(
-            Math.pow(this.transitMatrix[i][0] - this.centroid[j][0], 2) +
-            Math.pow(this.transitMatrix[i][1] - this.centroid[j][1], 2) +
-            Math.pow(this.transitMatrix[i][2] - this.centroid[j][2], 2) +
-            Math.pow(this.transitMatrix[i][3] - this.centroid[j][3], 2)
-        );
+      for (let j = 0; j < this.flowLines.length; j++) {
+        /** @type {FlowLine} */
+        const flowLine = this.flowLines[j];
+
+        /**
+         * Euclidean distance equivalent for lat/lon coordinate system
+         * @see https://math.stackexchange.com/a/29162
+         * */
+        const earthRadius = 6371; // km
+        const dist1 = Math.pow(datum.originLat - flowLine.originLat, 2);
+        const dist2 = Math.pow(datum.destLat - flowLine.destLat, 2);
+
+        const theta1 = (datum.originLat + flowLine.originLat) / 2;
+        const f1 = Math.pow(Math.cos(theta1), 2);
+        const dist3 = f1 * Math.pow(datum.originLon - flowLine.originLon, 2);
+
+        const theta2 = (datum.destLat + flowLine.destLat) / 2;
+        const f2 = Math.pow(Math.cos(theta2), 2);
+        const dist4 = f2 * Math.pow(datum.destLon - flowLine.destLon, 2);
+
+        const dist = Math.sqrt(dist1 + dist2 + dist3 + dist4);
+        const currentDist = earthRadius * dist;
 
         if (currentDist < minDist) {
           group = j;
@@ -321,58 +367,68 @@ export default class AppModel extends Model {
       result[i] = group;
     }
 
-    for (let i = 0; i < this.transitMatrix.length; i++) {
-      transitArrayWithClusters[result[i]].push(this.transitMatrix[i]);
+    for (let i = 0; i < this.flowMatrix.length; i++) {
+      flowMatrixWithClusters[result[i]].push(this.flowMatrix[i]);
     }
-    this.centroid = AppModel.findNewCentroid(transitArrayWithClusters);
-    AppModel.redrawFlowLines(this.centroid);
+    this.flowLines = AppModel.calcNewFlowLines(flowMatrixWithClusters);
+    AppModel.redrawFlowLines(this.flowLines);
   }
 
   /**
-   * @param {{}} transitArrayWithClusters
-   * @return {[]}
+   * @param {{string: FlowLine[]}} flowMatrixWithClusters
+   * @return {FlowLine[]}
    */
-  static findNewCentroid(transitArrayWithClusters) {
-    const newCentroid = [];
-    for (const [key] of Object.entries(transitArrayWithClusters)) {
+  static calcNewFlowLines(flowMatrixWithClusters) {
+    const newFlowLines = [];
+    for (const [key] of Object.entries(flowMatrixWithClusters)) {
+      const flowLines = flowMatrixWithClusters[key];
       let weight = 0;
-      let destX = 0;
-      let destY = 0;
-      let origX = 0;
-      let origY = 0;
-      const groupMember = transitArrayWithClusters[key];
-      for (let n = 0; n < groupMember.length; n++) {
-        if (groupMember[n][4] !== 0) {
-          const oldWeight = groupMember[n][4];
-          const newWeight = weight + oldWeight;
-          origX = (origX * weight + groupMember[n][0] * oldWeight) / newWeight;
-          origY = (origY * weight + groupMember[n][1] * oldWeight) / newWeight;
-          destX = (destX * weight + groupMember[n][2] * oldWeight) / newWeight;
-          destY = (destY * weight + groupMember[n][3] * oldWeight) / newWeight;
-          weight = newWeight;
+      let destLon = 0;
+      let destLat = 0;
+      let origLon = 0;
+      let origLat = 0;
+      for (let i = 0; i < flowLines.length; i++) {
+        /** @type {FlowLine} */
+        const flowLine = flowLines[i];
+        if (flowLine.weight === 0) {
+          continue;
         }
+
+        const newWeight = weight + flowLine.weight;
+        origLon = (origLon * weight + flowLine.originLon * flowLine.weight)
+            / newWeight;
+        origLat = (origLat * weight + flowLine.originLat * flowLine.weight)
+            / newWeight;
+        destLon = (destLon * weight + flowLine.destLon * flowLine.weight)
+            / newWeight;
+        destLat = (destLat * weight + flowLine.destLat * flowLine.weight)
+            / newWeight;
+        weight = newWeight;
       }
-      newCentroid.push([origX, origY, destX, destY, weight, key]);
+
+      newFlowLines.push(
+          new FlowLine(key, origLon, origLat, destLon, destLat, weight)
+      );
     }
-    return newCentroid;
+    return newFlowLines;
   }
 
   /**
-   * @param {[]} centroid
+   * @param {FlowLine[]} flowLines
    */
-  static redrawFlowLines(centroid) {
+  static redrawFlowLines(flowLines) {
     let minValue = Number.MAX_VALUE;
     let maxValue = 0;
-    for (let i = 0; i < centroid.length; i++) {
-      maxValue = Math.max(centroid[i][4], maxValue);
-      minValue = Math.min(centroid[i][4], minValue);
+    for (let i = 0; i < flowLines.length; i++) {
+      maxValue = Math.max(flowLines[i].weight, maxValue);
+      minValue = Math.min(flowLines[i].weight, minValue);
     }
 
     document.dispatchEvent(new CustomEvent('removeFlowLines'));
-    for (let j = 0; j < centroid.length; j++) {
+    for (let i = 0; i < flowLines.length; i++) {
       document.dispatchEvent(new CustomEvent('addFlowLine', {
         detail: {
-          line: centroid[j],
+          line: flowLines[i],
           min: minValue,
           max: maxValue,
         },
