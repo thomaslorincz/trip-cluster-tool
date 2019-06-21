@@ -52,7 +52,6 @@
     "helmet": "^3.18.0",
     "heroku-ssl-redirect": "0.0.4",
     "mapbox-gl": "^1.0.0",
-    "proj4": "^2.5.0",
     "regenerator-runtime": "^0.13.2"
   },
   "devDependencies": {
