@@ -170,3 +170,7 @@ body {
   margin-left: 20px;
   margin-top: 4px;
 }
+
+.mapboxgl-ctrl-bottom-left {
+  left: 210px;
+}
