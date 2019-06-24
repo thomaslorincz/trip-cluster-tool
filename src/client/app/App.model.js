@@ -131,6 +131,7 @@ export default class AppModel extends Model {
    * Runs an iteration of the k-means clustering algorithm.
    */
   nextIteration() {
+    document.dispatchEvent(new CustomEvent('removeClusters'));
     this.controlPanel.iteration++;
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
@@ -143,6 +144,7 @@ export default class AppModel extends Model {
    * toggled on.
    */
   autoIterate() {
+    document.dispatchEvent(new CustomEvent('removeClusters'));
     this.controlPanel.autoIterate = !this.controlPanel.autoIterate;
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
@@ -165,6 +167,7 @@ export default class AppModel extends Model {
    * Decreases the number of flow lines by 1
    */
   decrementFlowLines() {
+    document.dispatchEvent(new CustomEvent('removeClusters'));
     if (this.controlPanel.numFlowLines > 1) {
       this.controlPanel.numFlowLines--;
       this.controlPanel.iteration = 1;
@@ -191,6 +194,7 @@ export default class AppModel extends Model {
    * Increases the number of flow lines by 1
    */
   incrementFlowLines() {
+    document.dispatchEvent(new CustomEvent('removeClusters'));
     if (this.controlPanel.numFlowLines !== this.maxFlowLines) {
       this.controlPanel.numFlowLines++;
       this.controlPanel.iteration = 1;
@@ -217,6 +221,7 @@ export default class AppModel extends Model {
    * @param {string} boundary
    */
   updateBoundary(boundary) {
+    document.dispatchEvent(new CustomEvent('removeClusters'));
     this.controlPanel.district = -1;
     this.controlPanel.iteration = 0;
     this.controlPanel.boundary = boundary;
@@ -232,6 +237,7 @@ export default class AppModel extends Model {
    * @param {string} mode
    */
   updateMode(mode) {
+    document.dispatchEvent(new CustomEvent('removeClusters'));
     this.controlPanel.iteration = 0;
     this.controlPanel.mode = mode;
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
@@ -256,6 +262,7 @@ export default class AppModel extends Model {
    * @param {string} purpose
    */
   updatePurpose(purpose) {
+    document.dispatchEvent(new CustomEvent('removeClusters'));
     this.controlPanel.iteration = 0;
     this.controlPanel.purpose = purpose;
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
