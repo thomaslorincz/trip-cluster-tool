@@ -18,6 +18,7 @@ export default class AppModel extends Model {
       boundary: 'district',
       mode: 'total',
       purpose: 'W',
+      selectedLine: '',
     };
 
     this.maxFlowLines = 30;
@@ -122,12 +123,18 @@ export default class AppModel extends Model {
    */
   lineSelected(lineKey) {
     document.dispatchEvent(new CustomEvent('removeClusters'));
-    document.dispatchEvent(new CustomEvent('addClusters', {
-      detail: {
-        lineKey,
-        clusters: this.flowMatrixWithClusters[lineKey],
-      },
-    }));
+    if (this.controlPanel.selectedLine === lineKey) {
+      this.controlPanel.selectedLine = '';
+      this.splitIntoGroups();
+    } else {
+      this.controlPanel.selectedLine = lineKey;
+      document.dispatchEvent(new CustomEvent('addClusters', {
+        detail: {
+          lineKey,
+          clusters: this.flowMatrixWithClusters[lineKey],
+        },
+      }));
+    }
   }
 
   /**
