@@ -83,7 +83,7 @@ module.exports = {
       chunkFilename: '[name].css',
     }),
     new CompressPlugin({
-      test: /\.(js|css|csv)$/,
+      test: /\.(js|css)$/,
       algorithm: 'brotliCompress',
       filename: '[path].br[query]',
       deleteOriginalAssets: true,
