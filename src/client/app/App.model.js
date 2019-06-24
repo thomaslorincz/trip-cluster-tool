@@ -15,7 +15,7 @@ export default class AppModel extends Model {
       selectedLine: '',
       iteration: 0,
       autoIterate: false,
-      numFlowLines: 10,
+      numFlowLines: 5,
       boundary: 'district',
       mode: 'total',
       purpose: 'W',
