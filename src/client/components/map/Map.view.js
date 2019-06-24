@@ -39,6 +39,7 @@ export default class MapView extends View {
     this.map.touchZoomRotate.disable();
 
     this.linesDrawn = false;
+    this.clustersDrawn = false;
 
     this.map.on('load', () => {
       this.map.addLayer({
@@ -83,15 +84,24 @@ export default class MapView extends View {
             return d.layer.id === 'lineLayer';
           });
           const feature = thisLayerFeatures[0];
-          console.log(feature);
-        } else if (districts.length > 0) {
+          if (feature) {
+            this.container.dispatchEvent(new CustomEvent('lineClicked', {
+              detail: feature.properties['key'],
+            }));
+            return;
+          }
+        }
+
+        if (districts.length > 0) {
           const thisLayerFeatures = districts.filter((d) => {
             return d.layer.id === 'districtLayer';
           });
           const feature = thisLayerFeatures[0];
-          this.container.dispatchEvent(new CustomEvent('featureClicked', {
-            detail: feature.properties['District'],
-          }));
+          if (feature) {
+            this.container.dispatchEvent(new CustomEvent('featureClicked', {
+              detail: feature.properties['District'],
+            }));
+          }
         }
       });
 
@@ -137,6 +147,7 @@ export default class MapView extends View {
       data.features.push({
         'type': 'Feature',
         'properties': {
+          'key': line.key,
           'magnitude': line.weight,
           'base-width': baseWidth,
         },
@@ -179,6 +190,96 @@ export default class MapView extends View {
       this.map.removeLayer('lineLayer');
       this.map.removeSource('lineLayer');
       this.linesDrawn = false;
+    }
+  }
+
+  /**
+   * @param {FlowLine[]} clusters
+   */
+  addClusters(clusters) {
+    const originData = {
+      'type': 'FeatureCollection',
+      'features': [],
+    };
+
+    const destData = {
+      'type': 'FeatureCollection',
+      'features': [],
+    };
+
+    for (let i = 0; i < clusters.length; i++) {
+      const cluster = clusters[i];
+
+      originData.features.push({
+        'type': 'Feature',
+        'properties': {
+          'magnitude': cluster.weight,
+        },
+        'geometry': {
+          'type': 'Point',
+          'coordinates': proj4(
+              'EPSG:3776', 'EPSG:4326',
+              [cluster.originX, cluster.originY],
+          ),
+        },
+      });
+
+      destData.features.push({
+        'type': 'Feature',
+        'properties': {
+          'magnitude': cluster.weight,
+        },
+        'geometry': {
+          'type': 'Point',
+          'coordinates': proj4(
+              'EPSG:3776', 'EPSG:4326',
+              [cluster.destX, cluster.destY],
+          ),
+        },
+      });
+    }
+
+    this.map.addLayer({
+      'id': 'originLayer',
+      'type': 'circle',
+      'source': {
+        'type': 'geojson',
+        'data': originData,
+      },
+      'paint': {
+        'circle-color': '#FFFF00',
+        'circle-radius': ['/', ['get', 'magnitude'], 2],
+        'circle-opacity': 0.8,
+      },
+    });
+
+    this.map.addLayer({
+      'id': 'destLayer',
+      'type': 'circle',
+      'source': {
+        'type': 'geojson',
+        'data': destData,
+      },
+      'paint': {
+        'circle-color': '#00FF00',
+        'circle-radius': ['/', ['get', 'magnitude'], 2],
+        'circle-opacity': 0.8,
+      },
+    });
+
+    this.clustersDrawn = true;
+  }
+
+  /**
+   * Removes all drawn cluster circles
+   */
+  removeClusters() {
+    if (this.clustersDrawn) {
+      this.map.removeLayer('originLayer');
+      this.map.removeSource('originLayer');
+      this.map.removeLayer('destLayer');
+      this.map.removeSource('destLayer');
+      this.clustersDrawn = false;
     }
   }
 

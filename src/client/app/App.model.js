@@ -77,6 +77,8 @@ export default class AppModel extends Model {
 
     this.flowMatrix = [];
 
+    this.flowMatrixWithClusters = {};
+
     this.autoIterateInterval = null;
   }
 
@@ -84,6 +86,7 @@ export default class AppModel extends Model {
    * @param {number} districtId
    */
   geographySelected(districtId) {
+    document.dispatchEvent(new CustomEvent('removeClusters'));
     if (this.controlPanel.district === districtId) {
       this.controlPanel.district = -1;
       this.controlPanel.iteration = 0;
@@ -111,6 +114,16 @@ export default class AppModel extends Model {
     }));
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
+    }));
+  }
+
+  /**
+   * @param {string} lineKey
+   */
+  lineSelected(lineKey) {
+    document.dispatchEvent(new CustomEvent('removeClusters'));
+    document.dispatchEvent(new CustomEvent('addClusters', {
+      detail: this.flowMatrixWithClusters[lineKey],
     }));
   }
 
@@ -324,9 +337,9 @@ export default class AppModel extends Model {
    * lines into a number of cluster groups.
    */
   splitIntoGroups() {
-    const flowMatrixWithClusters = {};
+    this.flowMatrixWithClusters = {};
     for (let i = 0; i < this.flowLines.length; i++) {
-      flowMatrixWithClusters[i] = [];
+      this.flowMatrixWithClusters[i] = [];
     }
 
     const result = new Array(this.flowMatrix.length);
@@ -357,9 +370,9 @@ export default class AppModel extends Model {
     }
 
     for (let i = 0; i < this.flowMatrix.length; i++) {
-      flowMatrixWithClusters[result[i]].push(this.flowMatrix[i]);
+      this.flowMatrixWithClusters[result[i]].push(this.flowMatrix[i]);
     }
-    this.flowLines = AppModel.calcNewFlowLines(flowMatrixWithClusters);
+    this.flowLines = AppModel.calcNewFlowLines(this.flowMatrixWithClusters);
     AppModel.redrawFlowLines(this.flowLines);
   }
 

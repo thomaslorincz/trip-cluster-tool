@@ -24,8 +24,20 @@ export default class MapPresenter extends Presenter {
       this.view.removeFlowLines();
     });
 
+    document.addEventListener('addClusters', (event) => {
+      this.view.addClusters(event.detail);
+    });
+
+    document.addEventListener('removeClusters', () => {
+      this.view.removeClusters();
+    });
+
     this.view.container.addEventListener('featureClicked', (event) => {
       this.model.geographySelected(event.detail);
+    });
+
+    this.view.container.addEventListener('lineClicked', (event) => {
+      this.model.lineSelected(event.detail);
     });
   }
 }
