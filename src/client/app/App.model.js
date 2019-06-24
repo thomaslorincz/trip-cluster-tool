@@ -17,7 +17,7 @@ export default class AppModel extends Model {
       lineWeight: -1,
       iteration: 0,
       autoIterate: false,
-      numFlowLines: 5,
+      numFlowLines: 15,
       boundary: 'district',
       mode: 'total',
       purpose: 'W',
