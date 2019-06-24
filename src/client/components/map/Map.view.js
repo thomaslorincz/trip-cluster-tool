@@ -121,8 +121,6 @@ export default class MapView extends View {
    * @param {number} max - The maximum magnitude (used for line styling)
    */
   addFlowLines({lines, min, max}) {
-    let colourStyling = null;
-
     const data = {
       'type': 'FeatureCollection',
       'features': [],
@@ -133,14 +131,8 @@ export default class MapView extends View {
 
       let baseWidth = null;
       if (min === max) {
-        colourStyling = '#ff0000';
         baseWidth = 1000;
       } else {
-        colourStyling = [
-          'interpolate', ['linear'], ['get', 'magnitude'],
-          min, '#ffffff',
-          max, '#ff0000',
-        ];
         baseWidth = Math.max(1000 * ((line.weight - min) / (max - min)), 200);
       }
 
@@ -169,7 +161,7 @@ export default class MapView extends View {
         'data': data,
       },
       'paint': {
-        'line-color': colourStyling,
+        'line-color': '#FF0000',
         'line-width': [
           'interpolate', ['exponential', 2], ['zoom'],
           0, ['*', ['get', 'base-width'], ['^', 2, -16]],
@@ -216,7 +208,7 @@ export default class MapView extends View {
       originData.features.push({
         'type': 'Feature',
         'properties': {
-          'magnitude': cluster.weight,
+          'magnitude': Math.max(cluster.weight * 2, 100),
         },
         'geometry': {
           'type': 'Point',
@@ -230,7 +222,7 @@ export default class MapView extends View {
       destData.features.push({
         'type': 'Feature',
         'properties': {
-          'magnitude': cluster.weight,
+          'magnitude': Math.max(cluster.weight * 2, 100),
         },
         'geometry': {
           'type': 'Point',
@@ -251,7 +243,11 @@ export default class MapView extends View {
       },
       'paint': {
         'circle-color': '#FFFF00',
-        'circle-radius': ['/', ['get', 'magnitude'], 2],
+        'circle-radius': [
+          'interpolate', ['exponential', 2], ['zoom'],
+          0, ['*', ['get', 'magnitude'], ['^', 2, -16]],
+          24, ['*', ['get', 'magnitude'], ['^', 2, 8]],
+        ],
         'circle-opacity': 0.8,
       },
     });
@@ -265,7 +261,11 @@ export default class MapView extends View {
       },
       'paint': {
         'circle-color': '#00FF00',
-        'circle-radius': ['/', ['get', 'magnitude'], 2],
+        'circle-radius': [
+          'interpolate', ['exponential', 2], ['zoom'],
+          0, ['*', ['get', 'magnitude'], ['^', 2, -16]],
+          24, ['*', ['get', 'magnitude'], ['^', 2, 8]],
+        ],
         'circle-opacity': 0.8,
       },
     });
