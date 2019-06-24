@@ -97,7 +97,10 @@ export default class MapView extends View {
           const feature = thisLayerFeatures[0];
           if (feature) {
             this.container.dispatchEvent(new CustomEvent('lineClicked', {
-              detail: feature.properties['key'],
+              detail: {
+                lineKey: feature.properties['key'],
+                lineWeight: feature.properties['magnitude'],
+              },
             }));
             return;
           }

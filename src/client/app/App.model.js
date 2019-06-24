@@ -10,9 +10,11 @@ export default class AppModel extends Model {
   constructor() {
     super();
 
+    this.selectedLine = '';
+
     this.controlPanel = {
       district: -1,
-      selectedLine: '',
+      lineWeight: -1,
       iteration: 0,
       autoIterate: false,
       numFlowLines: 5,
@@ -120,14 +122,17 @@ export default class AppModel extends Model {
 
   /**
    * @param {string} lineKey
+   * @param {number} lineWeight
    */
-  lineSelected(lineKey) {
+  lineSelected({lineKey, lineWeight}) {
     document.dispatchEvent(new CustomEvent('removeClusters'));
-    if (this.controlPanel.selectedLine === lineKey) {
-      this.controlPanel.selectedLine = '';
+    if (this.selectedLine === lineKey) {
+      this.selectedLine = '';
+      this.controlPanel.lineWeight = -1;
       this.splitIntoGroups();
     } else {
-      this.controlPanel.selectedLine = lineKey;
+      this.selectedLine = lineKey;
+      this.controlPanel.lineWeight = lineWeight;
       document.dispatchEvent(new CustomEvent('addClusters', {
         detail: {
           lineKey,
