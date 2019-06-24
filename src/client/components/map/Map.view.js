@@ -37,7 +37,6 @@ export default class MapView extends View {
     });
 
     this.map.dragRotate.disable();
-    this.map.touchZoomRotate.disable();
 
     this.linesDrawn = false;
     this.clustersDrawn = false;
