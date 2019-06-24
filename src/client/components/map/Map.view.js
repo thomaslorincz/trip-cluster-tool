@@ -38,6 +38,9 @@ export default class MapView extends View {
 
     this.map.dragRotate.disable();
 
+    this.districtsDrawn = true;
+    this.zonesDrawn = false;
+
     this.linesDrawn = false;
     this.clustersDrawn = false;
 
@@ -57,9 +60,9 @@ export default class MapView extends View {
         'id': 'districtLayer',
         'source': {
           type: 'vector',
-          url: 'mapbox://thomaslorincz.7qoflzqc',
+          url: 'mapbox://thomaslorincz.6qk86ot5',
         },
-        'source-layer': 'district1669-5c4o7a',
+        'source-layer': 'district-btbn5v',
         'type': 'fill',
         'paint': {
           'fill-color': 'rgba(0,0,255,0.3)',
@@ -71,9 +74,39 @@ export default class MapView extends View {
         'id': 'districtLayerSelected',
         'source': {
           type: 'vector',
-          url: 'mapbox://thomaslorincz.7qoflzqc',
+          url: 'mapbox://thomaslorincz.6qk86ot5',
         },
-        'source-layer': 'district1669-5c4o7a',
+        'source-layer': 'district-btbn5v',
+        'type': 'line',
+        'feature_type': 'fill',
+        'paint': {
+          'line-width': 6,
+          'line-color': 'black',
+        },
+        'filter': ['in', 'District', ''],
+      });
+
+      this.map.addLayer({
+        'id': 'zoneLayer',
+        'source': {
+          type: 'vector',
+          url: 'mapbox://thomaslorincz.2jka2r5b',
+        },
+        'source-layer': 'TAZ-6swaau',
+        'type': 'fill',
+        'paint': {
+          'fill-color': 'rgba(0,0,255,0.3)',
+          'fill-outline-color': 'rgba(0,0,255,0.4)',
+        },
+      });
+
+      this.map.addLayer({
+        'id': 'zoneLayerSelected',
+        'source': {
+          type: 'vector',
+          url: 'mapbox://thomaslorincz.2jka2r5b',
+        },
+        'source-layer': 'TAZ-6swaau',
         'type': 'line',
         'feature_type': 'fill',
         'paint': {
@@ -87,6 +120,10 @@ export default class MapView extends View {
         const districts = this.map.queryRenderedFeatures(
             event.point,
             'districtLayer'
+        );
+        const zones = this.map.queryRenderedFeatures(
+            event.point,
+            'zoneLayer'
         );
         const lines = this.map.queryRenderedFeatures(event.point, 'lineLayer');
 
@@ -106,7 +143,7 @@ export default class MapView extends View {
           }
         }
 
-        if (districts.length > 0) {
+        if (this.districtsDrawn && districts.length > 0) {
           const thisLayerFeatures = districts.filter((d) => {
             return d.layer.id === 'districtLayer';
           });
@@ -114,6 +151,19 @@ export default class MapView extends View {
           if (feature) {
             this.container.dispatchEvent(new CustomEvent('featureClicked', {
               detail: feature.properties['District'],
+            }));
+          }
+          return;
+        }
+
+        if (this.zonesDrawn && zones.length > 0) {
+          const thisLayerFeatures = districts.filter((d) => {
+            return d.layer.id === 'zoneLayer';
+          });
+          const feature = thisLayerFeatures[0];
+          if (feature) {
+            this.container.dispatchEvent(new CustomEvent('featureClicked', {
+              detail: feature.properties['TAZ_New'],
             }));
           }
         }
@@ -319,9 +369,15 @@ export default class MapView extends View {
   }
 
   /**
-   * @param {number} districtId
+   * @param {number} id
    */
-  updateSelected(districtId) {
-    this.map.setFilter('districtLayerSelected', ['in', 'District', districtId]);
+  updateSelected(id) {
+    if (this.districtsDrawn) {
+      this.map.setFilter('districtLayerSelected', ['in', 'District', id]);
+      this.map.setFilter('zoneLayerSelected', ['in', 'TAZ_New', -1]);
+    } else if (this.zonesDrawn) {
+      this.map.setFilter('districtLayerSelected', ['in', 'District', -1]);
+      this.map.setFilter('zoneLayerSelected', ['in', 'TAZ_New', id]);
+    }
   }
 }

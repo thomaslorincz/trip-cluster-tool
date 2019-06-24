@@ -13,7 +13,7 @@ export default class AppModel extends Model {
     this.selectedLine = '';
 
     this.controlPanel = {
-      district: -1,
+      geography: -1,
       lineWeight: -1,
       iteration: 0,
       autoIterate: false,
@@ -86,18 +86,21 @@ export default class AppModel extends Model {
   }
 
   /**
-   * @param {number} districtId
+   * @param {number} id
+   * @param {'district'|'zone'} type
    */
-  geographySelected(districtId) {
+  geographySelected({id, type}) {
     document.dispatchEvent(new CustomEvent('removeClusters'));
     this.selectedLine = '';
     this.controlPanel.lineWeight = -1;
-    if (this.controlPanel.district === districtId) {
-      this.controlPanel.district = -1;
+
+    if (this.controlPanel.boundary === type &&
+        this.controlPanel.geography === id) {
+      this.controlPanel.geography = -1;
       this.controlPanel.iteration = 0;
       document.dispatchEvent(new CustomEvent('removeFlowLines'));
     } else {
-      this.controlPanel.district = districtId;
+      this.controlPanel.geography = id;
       this.controlPanel.iteration = 1;
       if (this.controlPanel.mode === 'total') {
         this.processData(
@@ -115,7 +118,10 @@ export default class AppModel extends Model {
     }
 
     document.dispatchEvent(new CustomEvent('selectedUpdated', {
-      detail: this.controlPanel.district,
+      detail: {
+        id: this.controlPanel.geography,
+        type: this.controlPanel.boundary,
+      },
     }));
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
@@ -243,11 +249,14 @@ export default class AppModel extends Model {
    */
   updateBoundary(boundary) {
     document.dispatchEvent(new CustomEvent('removeClusters'));
-    this.controlPanel.district = -1;
+    this.controlPanel.geography = -1;
     this.controlPanel.iteration = 0;
     this.controlPanel.boundary = boundary;
     document.dispatchEvent(new CustomEvent('selectedUpdated', {
-      detail: this.controlPanel.district,
+      detail: {
+        id: this.controlPanel.geography,
+        type: this.controlPanel.boundary,
+      },
     }));
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
@@ -319,8 +328,14 @@ export default class AppModel extends Model {
 
     const purposeArray = dataMatrix[purpose];
     for (let i = 0; i < purposeArray.length; i++) {
-      if (purposeArray[i].destDistrict === this.controlPanel.district) {
-        this.flowMatrix.push(purposeArray[i]);
+      if (this.controlPanel.boundary === 'district') {
+        if (purposeArray[i].destDistrict === this.controlPanel.geography) {
+          this.flowMatrix.push(purposeArray[i]);
+        }
+      } else if (this.controlPanel.boundary === 'zone') {
+        if (purposeArray[i].destZone === this.controlPanel.geography) {
+          this.flowMatrix.push(purposeArray[i]);
+        }
       }
     }
 
