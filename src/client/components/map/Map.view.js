@@ -1,6 +1,7 @@
 import View from '../../superclasses/View';
 import mapboxgl from 'mapbox-gl';
 import proj4 from 'proj4';
+import * as d3 from 'd3-fetch';
 
 /**
  * A view that represents an interactive map.
@@ -42,6 +43,17 @@ export default class MapView extends View {
     this.clustersDrawn = false;
 
     this.map.on('load', () => {
+      d3.image('assets/images/chevron-32x32.png').then((imageData) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imageData, 0, 0);
+        this.map.addImage('chevron', {
+          width: 32,
+          height: 32,
+          data: ctx.getImageData(0, 0, 32, 32).data,
+        });
+      });
+
       this.map.addLayer({
         'id': 'districtLayer',
         'source': {
@@ -171,6 +183,20 @@ export default class MapView extends View {
       },
     });
 
+    this.map.addLayer({
+      'id': 'lineArrows',
+      'type': 'symbol',
+      'source': 'lineLayer',
+      'layout': {
+        'symbol-placement': 'line',
+        'symbol-spacing': 100,
+        'icon-image': 'chevron',
+        'icon-rotation-alignment': 'map',
+        'icon-rotate': 90,
+        'icon-ignore-placement': true,
+      },
+    });
+
     this.linesDrawn = true;
   }
 
@@ -179,6 +205,7 @@ export default class MapView extends View {
    */
   removeFlowLines() {
     if (this.linesDrawn) {
+      this.map.removeLayer('lineArrows');
       this.map.removeLayer('lineLayer');
       this.map.removeSource('lineLayer');
       this.linesDrawn = false;
@@ -191,6 +218,7 @@ export default class MapView extends View {
    */
   addClusters({lineKey, clusters}) {
     this.map.setFilter('lineLayer', ['in', 'key', lineKey]);
+    this.map.setFilter('lineArrows', ['in', 'key', lineKey]);
 
     const originData = {
       'type': 'FeatureCollection',
@@ -284,6 +312,7 @@ export default class MapView extends View {
       this.map.removeSource('destLayer');
       this.clustersDrawn = false;
       this.map.setFilter('lineLayer', null);
+      this.map.setFilter('lineArrows', null);
     }
   }
 
