@@ -123,7 +123,10 @@ export default class AppModel extends Model {
   lineSelected(lineKey) {
     document.dispatchEvent(new CustomEvent('removeClusters'));
     document.dispatchEvent(new CustomEvent('addClusters', {
-      detail: this.flowMatrixWithClusters[lineKey],
+      detail: {
+        lineKey,
+        clusters: this.flowMatrixWithClusters[lineKey],
+      },
     }));
   }
 

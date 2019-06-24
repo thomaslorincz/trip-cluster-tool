@@ -72,12 +72,12 @@ export default class MapView extends View {
         'filter': ['in', 'District', ''],
       });
 
-      this.map.on('click', (e) => {
+      this.map.on('click', (event) => {
         const districts = this.map.queryRenderedFeatures(
-            e.point,
+            event.point,
             'districtLayer'
         );
-        const lines = this.map.queryRenderedFeatures(e.point, 'lineLayer');
+        const lines = this.map.queryRenderedFeatures(event.point, 'lineLayer');
 
         if (this.linesDrawn && lines.length > 0) {
           const thisLayerFeatures = districts.filter((d) => {
@@ -194,9 +194,12 @@ export default class MapView extends View {
   }
 
   /**
+   * @param {string} lineKey
    * @param {FlowLine[]} clusters
    */
-  addClusters(clusters) {
+  addClusters({lineKey, clusters}) {
+    this.map.setFilter('lineLayer', ['in', 'key', lineKey]);
+
     const originData = {
       'type': 'FeatureCollection',
       'features': [],
@@ -280,6 +283,7 @@ export default class MapView extends View {
       this.map.removeLayer('destLayer');
       this.map.removeSource('destLayer');
       this.clustersDrawn = false;
+      this.map.setFilter('lineLayer', null);
     }
   }
 
