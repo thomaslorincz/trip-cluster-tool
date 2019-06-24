@@ -26,8 +26,8 @@ export default class AppModel extends Model {
     this.transitDataMatrix = {};
 
     Promise.all([
-      d3.csv('assets/data/result_total_proj.csv'),
-      d3.csv('assets/data/result_transit_proj.csv'),
+      d3.csv('assets/data/result_total.csv'),
+      d3.csv('assets/data/result_transit.csv'),
     ]).then(([totalData, transitData]) => {
       for (let i = 0; i < transitData.length; i++) {
         const transitDatum = transitData[i];
@@ -36,10 +36,10 @@ export default class AppModel extends Model {
         }
 
         this.transitDataMatrix[transitDatum['purpose']].push({
-          originLon: parseFloat(transitDatum['origin_lon']),
-          originLat: parseFloat(transitDatum['origin_lat']),
-          destLon: parseFloat(transitDatum['dest_lon']),
-          destLat: parseFloat(transitDatum['dest_lat']),
+          originX: parseFloat(transitDatum['origin_x']),
+          originY: parseFloat(transitDatum['origin_y']),
+          destX: parseFloat(transitDatum['dest_x']),
+          destY: parseFloat(transitDatum['dest_y']),
           weight: parseInt(transitDatum['weight']),
           originZone: parseInt(transitDatum['origin_zone']),
           destZone: parseInt(transitDatum['dest_zone']),
@@ -55,10 +55,10 @@ export default class AppModel extends Model {
         }
 
         this.totalDataMatrix[totalDatum['purpose']].push({
-          originLon: parseFloat(totalDatum['origin_lon']),
-          originLat: parseFloat(totalDatum['origin_lat']),
-          destLon: parseFloat(totalDatum['dest_lon']),
-          destLat: parseFloat(totalDatum['dest_lat']),
+          originX: parseFloat(totalDatum['origin_x']),
+          originY: parseFloat(totalDatum['origin_y']),
+          destX: parseFloat(totalDatum['dest_x']),
+          destY: parseFloat(totalDatum['dest_y']),
           weight: parseInt(totalDatum['weight']),
           originZone: parseInt(totalDatum['origin_zone']),
           destZone: parseInt(totalDatum['dest_zone']),
@@ -339,24 +339,13 @@ export default class AppModel extends Model {
         /** @type {FlowLine} */
         const flowLine = this.flowLines[j];
 
-        /**
-         * Euclidean distance equivalent for lat/lon coordinate system
-         * @see https://math.stackexchange.com/a/29162
-         * */
-        const earthRadius = 6371; // km
-        const dist1 = Math.pow(datum.originLat - flowLine.originLat, 2);
-        const dist2 = Math.pow(datum.destLat - flowLine.destLat, 2);
-
-        const theta1 = (datum.originLat + flowLine.originLat) / 2;
-        const f1 = Math.pow(Math.cos(theta1), 2);
-        const dist3 = f1 * Math.pow(datum.originLon - flowLine.originLon, 2);
-
-        const theta2 = (datum.destLat + flowLine.destLat) / 2;
-        const f2 = Math.pow(Math.cos(theta2), 2);
-        const dist4 = f2 * Math.pow(datum.destLon - flowLine.destLon, 2);
-
-        const dist = Math.sqrt(dist1 + dist2 + dist3 + dist4);
-        const currentDist = earthRadius * dist;
+        // Euclidean distance
+        const currentDist = Math.sqrt(
+            Math.pow(datum.originX - flowLine.originX, 2)
+            + Math.pow(datum.originY - flowLine.originY, 2)
+            + Math.pow(datum.destX - flowLine.destX, 2)
+            + Math.pow(datum.destY - flowLine.destY, 2)
+        );
 
         if (currentDist < minDist) {
           group = j;
@@ -367,6 +356,7 @@ export default class AppModel extends Model {
       result[i] = group;
     }
 
+    console.log(flowMatrixWithClusters);
     for (let i = 0; i < this.flowMatrix.length; i++) {
       flowMatrixWithClusters[result[i]].push(this.flowMatrix[i]);
     }
@@ -383,10 +373,10 @@ export default class AppModel extends Model {
     for (const [key] of Object.entries(flowMatrixWithClusters)) {
       const flowLines = flowMatrixWithClusters[key];
       let weight = 0;
-      let destLon = 0;
-      let destLat = 0;
-      let origLon = 0;
-      let origLat = 0;
+      let destX = 0;
+      let destY = 0;
+      let originX = 0;
+      let originY = 0;
       for (let i = 0; i < flowLines.length; i++) {
         /** @type {FlowLine} */
         const flowLine = flowLines[i];
@@ -395,19 +385,19 @@ export default class AppModel extends Model {
         }
 
         const newWeight = weight + flowLine.weight;
-        origLon = (origLon * weight + flowLine.originLon * flowLine.weight)
+        originX = (originX * weight + flowLine.originX * flowLine.weight)
             / newWeight;
-        origLat = (origLat * weight + flowLine.originLat * flowLine.weight)
+        originY = (originY * weight + flowLine.originY * flowLine.weight)
             / newWeight;
-        destLon = (destLon * weight + flowLine.destLon * flowLine.weight)
+        destX = (destX * weight + flowLine.destX * flowLine.weight)
             / newWeight;
-        destLat = (destLat * weight + flowLine.destLat * flowLine.weight)
+        destY = (destY * weight + flowLine.destY * flowLine.weight)
             / newWeight;
         weight = newWeight;
       }
 
       newFlowLines.push(
-          new FlowLine(key, origLon, origLat, destLon, destLat, weight)
+          new FlowLine(key, originX, originY, destX, destY, weight)
       );
     }
     return newFlowLines;

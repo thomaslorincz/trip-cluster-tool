@@ -6,18 +6,18 @@
 export default class FlowLine {
   /**
    * @param {string} key - The ID of the bounding geometry.
-   * @param {number} originLon
-   * @param {number} originLat
-   * @param {number} destLon
-   * @param {number} destLat
+   * @param {number} originX
+   * @param {number} originY
+   * @param {number} destX
+   * @param {number} destY
    * @param {number} weight - The magnitude of the flow line.
    */
-  constructor(key, originLon, originLat, destLon, destLat, weight) {
+  constructor(key, originX, originY, destX, destY, weight) {
     this.key = key;
-    this.originLon = originLon;
-    this.originLat = originLat;
-    this.destLon = destLon;
-    this.destLat = destLat;
+    this.originX = originX;
+    this.originY = originY;
+    this.destX = destX;
+    this.destY = destY;
     this.weight = weight;
   }
 }
