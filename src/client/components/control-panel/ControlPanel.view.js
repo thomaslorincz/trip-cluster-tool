@@ -11,6 +11,7 @@ export default class ControlPanelView extends View {
     super(container);
 
     this.selectedGeography = document.getElementById('selected-geography');
+    this.selectedLine = document.getElementById('selected-line');
 
     this.iterationNumber = document.getElementById('iteration-number');
 
@@ -66,6 +67,7 @@ export default class ControlPanelView extends View {
 
   /**
    * @param {number} district
+   * @param {string} selectedLine
    * @param {number} iteration
    * @param {boolean} autoIterate
    * @param {number} numFlowLines
@@ -73,8 +75,8 @@ export default class ControlPanelView extends View {
    * @param {string} mode
    * @param {string} purpose
    */
-  draw({district, iteration, autoIterate, numFlowLines, boundary, mode,
-    purpose}) {
+  draw({district, selectedLine, iteration, autoIterate, numFlowLines, boundary,
+    mode, purpose}) {
     if (district === -1) {
       this.selectedGeography.innerText = 'Nothing Selected';
       this.selectedGeography.classList.remove('selected-text');
@@ -85,6 +87,12 @@ export default class ControlPanelView extends View {
         this.selectedGeography.innerText = `Zone ${district}`;
       }
       this.selectedGeography.classList.add('selected-text');
+    }
+
+    if (selectedLine === '') {
+      this.selectedLine.innerText = '';
+    } else {
+      this.selectedLine.innerText = `Line ${selectedLine}`;
     }
 
     this.iterationNumber.innerText = iteration.toString();

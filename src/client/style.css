@@ -164,3 +164,9 @@ body {
 .entry {
   cursor: pointer;
 }
+
+#selected-list > .content-text {
+  text-align: start;
+  margin-left: 20px;
+  margin-top: 4px;
+}

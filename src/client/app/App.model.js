@@ -12,13 +12,13 @@ export default class AppModel extends Model {
 
     this.controlPanel = {
       district: -1,
+      selectedLine: '',
       iteration: 0,
       autoIterate: false,
       numFlowLines: 10,
       boundary: 'district',
       mode: 'total',
       purpose: 'W',
-      selectedLine: '',
     };
 
     this.maxFlowLines = 30;
@@ -135,6 +135,10 @@ export default class AppModel extends Model {
         },
       }));
     }
+
+    document.dispatchEvent(new CustomEvent('controlsUpdated', {
+      detail: this.controlPanel,
+    }));
   }
 
   /**
