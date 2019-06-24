@@ -90,6 +90,8 @@ export default class AppModel extends Model {
    */
   geographySelected(districtId) {
     document.dispatchEvent(new CustomEvent('removeClusters'));
+    this.selectedLine = '';
+    this.controlPanel.lineWeight = -1;
     if (this.controlPanel.district === districtId) {
       this.controlPanel.district = -1;
       this.controlPanel.iteration = 0;
