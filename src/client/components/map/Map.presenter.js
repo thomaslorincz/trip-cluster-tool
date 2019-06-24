@@ -16,8 +16,8 @@ export default class MapPresenter extends Presenter {
       this.view.updateSelected(event.detail);
     });
 
-    document.addEventListener('addFlowLine', (event) => {
-      this.view.addFlowLine(event.detail);
+    document.addEventListener('addFlowLines', (event) => {
+      this.view.addFlowLines(event.detail);
     });
 
     document.addEventListener('removeFlowLines', () => {

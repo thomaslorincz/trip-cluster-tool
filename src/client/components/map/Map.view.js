@@ -38,7 +38,7 @@ export default class MapView extends View {
     this.map.dragRotate.disable();
     this.map.touchZoomRotate.disable();
 
-    this.lineLayers = [];
+    this.linesDrawn = false;
 
     this.map.on('load', () => {
       this.map.addLayer({
@@ -71,13 +71,21 @@ export default class MapView extends View {
         'filter': ['in', 'District', ''],
       });
 
-      this.map.on('click', 'districtLayer', (e) => {
-        const features = this.map.queryRenderedFeatures(
+      this.map.on('click', (e) => {
+        const districts = this.map.queryRenderedFeatures(
             e.point,
             'districtLayer'
         );
-        if (features.length > 0) {
-          const thisLayerFeatures = features.filter((d) => {
+        const lines = this.map.queryRenderedFeatures(e.point, 'lineLayer');
+
+        if (this.linesDrawn && lines.length > 0) {
+          const thisLayerFeatures = districts.filter((d) => {
+            return d.layer.id === 'lineLayer';
+          });
+          const feature = thisLayerFeatures[0];
+          console.log(feature);
+        } else if (districts.length > 0) {
+          const thisLayerFeatures = districts.filter((d) => {
             return d.layer.id === 'districtLayer';
           });
           const feature = thisLayerFeatures[0];
@@ -98,52 +106,56 @@ export default class MapView extends View {
   }
 
   /**
-   * @param {FlowLine} line
+   * @param {FlowLine[]} line
    * @param {number} min - The minimum magnitude (used for line styling)
    * @param {number} max - The maximum magnitude (used for line styling)
    */
-  addFlowLine({line, min, max}) {
-    const origin = proj4(
-        'EPSG:3776', 'EPSG:4326',
-        [line.originX, line.originY],
-    );
-    const dest = proj4(
-        'EPSG:3776', 'EPSG:4326',
-        [line.destX, line.destY],
-    );
-
-    this.lineLayers.push(line.key);
-
+  addFlowLines({lines, min, max}) {
     let colourStyling = null;
-    let baseWidth = null;
-    if (min === max) {
-      colourStyling = '#ff0000';
-      baseWidth = 1000;
-    } else {
-      colourStyling = [
-        'interpolate', ['linear'], ['get', 'magnitude'],
-        min, '#ffffff',
-        max, '#ff0000',
-      ];
-      baseWidth = Math.max(1000 * ((line.weight - min) / (max - min)), 200);
+
+    const data = {
+      'type': 'FeatureCollection',
+      'features': [],
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      let baseWidth = null;
+      if (min === max) {
+        colourStyling = '#ff0000';
+        baseWidth = 1000;
+      } else {
+        colourStyling = [
+          'interpolate', ['linear'], ['get', 'magnitude'],
+          min, '#ffffff',
+          max, '#ff0000',
+        ];
+        baseWidth = Math.max(1000 * ((line.weight - min) / (max - min)), 200);
+      }
+
+      data.features.push({
+        'type': 'Feature',
+        'properties': {
+          'magnitude': line.weight,
+          'base-width': baseWidth,
+        },
+        'geometry': {
+          'type': 'LineString',
+          'coordinates': [
+            proj4('EPSG:3776', 'EPSG:4326', [line.originX, line.originY]),
+            proj4('EPSG:3776', 'EPSG:4326', [line.destX, line.destY]),
+          ],
+        },
+      });
     }
 
     this.map.addLayer({
-      'id': line.key,
+      'id': 'lineLayer',
       'type': 'line',
       'source': {
         'type': 'geojson',
-        'data': {
-          'type': 'Feature',
-          'properties': {
-            'magnitude': line.weight,
-            'base-width': baseWidth,
-          },
-          'geometry': {
-            'type': 'LineString',
-            'coordinates': [origin, dest],
-          },
-        },
+        'data': data,
       },
       'paint': {
         'line-color': colourStyling,
@@ -155,25 +167,19 @@ export default class MapView extends View {
         'line-opacity': 0.8,
       },
     });
+
+    this.linesDrawn = true;
   }
 
   /**
    * Removes all drawn lines
    */
   removeFlowLines() {
-    this.lineLayers.forEach((id) => {
-      if (this.map.getLayer(id)) {
-        this.map.removeLayer(id);
-      }
-
-      if (this.map.getLayer(`${id}-arrows`)) {
-        this.map.removeLayer(`${id}-arrows`);
-      }
-
-      if (this.map.getSource(id)) {
-        this.map.removeSource(id);
-      }
-    });
+    if (this.linesDrawn) {
+      this.map.removeLayer('lineLayer');
+      this.map.removeSource('lineLayer');
+      this.linesDrawn = false;
+    }
   }
 
   /**

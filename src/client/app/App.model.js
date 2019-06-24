@@ -356,7 +356,6 @@ export default class AppModel extends Model {
       result[i] = group;
     }
 
-    console.log(flowMatrixWithClusters);
     for (let i = 0; i < this.flowMatrix.length; i++) {
       flowMatrixWithClusters[result[i]].push(this.flowMatrix[i]);
     }
@@ -415,14 +414,12 @@ export default class AppModel extends Model {
     }
 
     document.dispatchEvent(new CustomEvent('removeFlowLines'));
-    for (let i = 0; i < flowLines.length; i++) {
-      document.dispatchEvent(new CustomEvent('addFlowLine', {
-        detail: {
-          line: flowLines[i],
-          min: minValue,
-          max: maxValue,
-        },
-      }));
-    }
+    document.dispatchEvent(new CustomEvent('addFlowLines', {
+      detail: {
+        lines: flowLines,
+        min: minValue,
+        max: maxValue,
+      },
+    }));
   }
 }
