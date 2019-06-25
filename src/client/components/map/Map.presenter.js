@@ -32,6 +32,10 @@ export default class MapPresenter extends Presenter {
       this.view.removeClusters();
     });
 
+    document.addEventListener('boundaryUpdated', (event) => {
+      this.view.updateBoundary(event.detail);
+    });
+
     this.view.container.addEventListener('featureClicked', (event) => {
       this.model.geographySelected(event.detail);
     });

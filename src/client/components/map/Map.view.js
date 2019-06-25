@@ -57,7 +57,7 @@ export default class MapView extends View {
       });
 
       this.map.addLayer({
-        'id': 'districtLayer',
+        'id': 'districts',
         'source': {
           type: 'vector',
           url: 'mapbox://thomaslorincz.6qk86ot5',
@@ -66,12 +66,12 @@ export default class MapView extends View {
         'type': 'fill',
         'paint': {
           'fill-color': 'rgba(0,0,255,0.3)',
-          'fill-outline-color': 'rgba(0,0,255,0.4)',
+          'fill-outline-color': 'rgba(255,255,255,0.1)',
         },
       });
 
       this.map.addLayer({
-        'id': 'districtLayerSelected',
+        'id': 'selectedDistrict',
         'source': {
           type: 'vector',
           url: 'mapbox://thomaslorincz.6qk86ot5',
@@ -83,11 +83,11 @@ export default class MapView extends View {
           'line-width': 6,
           'line-color': 'black',
         },
-        'filter': ['in', 'District', ''],
+        'filter': ['in', 'District', -1],
       });
 
       this.map.addLayer({
-        'id': 'zoneLayer',
+        'id': 'zones',
         'source': {
           type: 'vector',
           url: 'mapbox://thomaslorincz.2jka2r5b',
@@ -96,12 +96,12 @@ export default class MapView extends View {
         'type': 'fill',
         'paint': {
           'fill-color': 'rgba(0,0,255,0.3)',
-          'fill-outline-color': 'rgba(0,0,255,0.4)',
+          'fill-outline-color': 'rgba(255,255,255,0.1)',
         },
       });
 
       this.map.addLayer({
-        'id': 'zoneLayerSelected',
+        'id': 'selectedZone',
         'source': {
           type: 'vector',
           url: 'mapbox://thomaslorincz.2jka2r5b',
@@ -113,18 +113,15 @@ export default class MapView extends View {
           'line-width': 6,
           'line-color': 'black',
         },
-        'filter': ['in', 'District', ''],
+        'filter': ['in', 'TAZ_New', -1],
       });
 
       this.map.on('click', (event) => {
         const districts = this.map.queryRenderedFeatures(
             event.point,
-            'districtLayer'
+            'districts'
         );
-        const zones = this.map.queryRenderedFeatures(
-            event.point,
-            'zoneLayer'
-        );
+        const zones = this.map.queryRenderedFeatures(event.point, 'zones');
         const lines = this.map.queryRenderedFeatures(event.point, 'lineLayer');
 
         if (this.linesDrawn && lines.length > 0) {
@@ -145,37 +142,42 @@ export default class MapView extends View {
 
         if (this.districtsDrawn && districts.length > 0) {
           const thisLayerFeatures = districts.filter((d) => {
-            return d.layer.id === 'districtLayer';
+            return d.layer.id === 'districts';
           });
           const feature = thisLayerFeatures[0];
           if (feature) {
             this.container.dispatchEvent(new CustomEvent('featureClicked', {
-              detail: feature.properties['District'],
+              detail: {
+                id: feature.properties['District'],
+                type: 'district',
+              },
             }));
           }
-          return;
-        }
-
-        if (this.zonesDrawn && zones.length > 0) {
+        } else if (this.zonesDrawn && zones.length > 0) {
           const thisLayerFeatures = districts.filter((d) => {
-            return d.layer.id === 'zoneLayer';
+            return d.layer.id === 'zones';
           });
           const feature = thisLayerFeatures[0];
           if (feature) {
             this.container.dispatchEvent(new CustomEvent('featureClicked', {
-              detail: feature.properties['TAZ_New'],
+              detail: {
+                id: feature.properties['TAZ_New'],
+                type: 'zone',
+              },
             }));
           }
         }
       });
 
-      this.map.on('mouseenter', 'districtLayer', () => {
+      this.map.on('mouseenter', 'districts', () => {
         this.map.getCanvas().style.cursor = 'pointer';
       });
 
-      this.map.on('mouseleave', 'districtLayer', () => {
+      this.map.on('mouseleave', 'districts', () => {
         this.map.getCanvas().style.cursor = '';
       });
+
+      this.updateBoundary('district');
     });
   }
 
@@ -369,15 +371,35 @@ export default class MapView extends View {
   }
 
   /**
+   * @param {'district'|'zone'} type
+   */
+  updateBoundary(type) {
+    if (type === 'district') {
+      this.map.setLayoutProperty('districts', 'visibility', 'visible');
+      this.map.setLayoutProperty('selectedDistrict', 'visibility', 'visible');
+      this.map.setLayoutProperty('zones', 'visibility', 'none');
+      this.map.setLayoutProperty('selectedZone', 'visibility', 'none');
+      this.districtsDrawn = true;
+      this.zonesDrawn = false;
+    } else if (type === 'zone') {
+      this.map.setLayoutProperty('districts', 'visibility', 'none');
+      this.map.setLayoutProperty('selectedDistrict', 'visibility', 'none');
+      this.map.setLayoutProperty('zones', 'visibility', 'visible');
+      this.map.setLayoutProperty('selectedZone', 'visibility', 'visible');
+      this.zonesDrawn = true;
+      this.districtsDrawn = false;
+    }
+  }
+
+  /**
    * @param {number} id
    */
   updateSelected(id) {
+    console.log(id);
     if (this.districtsDrawn) {
-      this.map.setFilter('districtLayerSelected', ['in', 'District', id]);
-      this.map.setFilter('zoneLayerSelected', ['in', 'TAZ_New', -1]);
+      this.map.setFilter('selectedDistrict', ['in', 'District', id]);
     } else if (this.zonesDrawn) {
-      this.map.setFilter('districtLayerSelected', ['in', 'District', -1]);
-      this.map.setFilter('zoneLayerSelected', ['in', 'TAZ_New', id]);
+      this.map.setFilter('selectedZone', ['in', 'TAZ_New', id]);
     }
   }
 }

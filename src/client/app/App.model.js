@@ -118,10 +118,7 @@ export default class AppModel extends Model {
     }
 
     document.dispatchEvent(new CustomEvent('selectedUpdated', {
-      detail: {
-        id: this.controlPanel.geography,
-        type: this.controlPanel.boundary,
-      },
+      detail: this.controlPanel.geography,
     }));
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
@@ -248,18 +245,19 @@ export default class AppModel extends Model {
    * @param {string} boundary
    */
   updateBoundary(boundary) {
+    document.dispatchEvent(new CustomEvent('removeFlowLines'));
     document.dispatchEvent(new CustomEvent('removeClusters'));
     this.controlPanel.geography = -1;
     this.controlPanel.iteration = 0;
     this.controlPanel.boundary = boundary;
     document.dispatchEvent(new CustomEvent('selectedUpdated', {
-      detail: {
-        id: this.controlPanel.geography,
-        type: this.controlPanel.boundary,
-      },
+      detail: this.controlPanel.geography,
     }));
     document.dispatchEvent(new CustomEvent('controlsUpdated', {
       detail: this.controlPanel,
+    }));
+    document.dispatchEvent(new CustomEvent('boundaryUpdated', {
+      detail: this.controlPanel.boundary,
     }));
   }
 

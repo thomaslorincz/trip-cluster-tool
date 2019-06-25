@@ -66,7 +66,7 @@ export default class ControlPanelView extends View {
   }
 
   /**
-   * @param {number} district
+   * @param {number} geography
    * @param {number} lineWeight
    * @param {number} iteration
    * @param {boolean} autoIterate
@@ -75,16 +75,16 @@ export default class ControlPanelView extends View {
    * @param {string} mode
    * @param {string} purpose
    */
-  draw({district, lineWeight, iteration, autoIterate, numFlowLines, boundary,
+  draw({geography, lineWeight, iteration, autoIterate, numFlowLines, boundary,
     mode, purpose}) {
-    if (district === -1) {
+    if (geography === -1) {
       this.selectedGeography.innerText = 'Nothing Selected';
       this.selectedGeography.classList.remove('selected-text');
     } else {
       if (boundary === 'district') {
-        this.selectedGeography.innerText = `District ${district}`;
+        this.selectedGeography.innerText = `District ${geography}`;
       } else {
-        this.selectedGeography.innerText = `Zone ${district}`;
+        this.selectedGeography.innerText = `Zone ${geography}`;
       }
       this.selectedGeography.classList.add('selected-text');
     }
