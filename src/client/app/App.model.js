@@ -94,8 +94,8 @@ export default class AppModel extends Model {
     this.selectedLine = '';
     this.controlPanel.lineWeight = -1;
 
-    if (this.controlPanel.boundary === type &&
-        this.controlPanel.geography === id) {
+    if (this.controlPanel.boundary === type
+        && this.controlPanel.geography === id) {
       this.controlPanel.geography = -1;
       this.controlPanel.iteration = 0;
       document.dispatchEvent(new CustomEvent('removeFlowLines'));

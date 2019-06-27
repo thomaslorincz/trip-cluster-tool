@@ -16,18 +16,18 @@ export default class MapView extends View {
     proj4.defs([
       [
         'EPSG:4326',
-        '+title=WGS 84 (long/lat) +proj=longlat +ellps=WGS84 +datum=WGS84 +un' +
-        'its=degrees',
+        '+title=WGS 84 (long/lat) +proj=longlat +ellps=WGS84 +datum=WGS84 +unit'
+        + 's=degrees',
       ],
       [
         'EPSG:3776',
-        '+proj=tmerc +lat_0=0 +lon_0=-114 +k=0.9999 +x_0=0 +y_0=0 +ellps=GRS8' +
-        '0 +datum=NAD83 +units=m +no_defs',
+        '+proj=tmerc +lat_0=0 +lon_0=-114 +k=0.9999 +x_0=0 +y_0=0 +ellps=GRS80 '
+        + '+datum=NAD83 +units=m +no_defs',
       ],
     ]);
 
-    mapboxgl.accessToken = 'pk.eyJ1IjoidGhvbWFzbG9yaW5jeiIsImEiOiJjamx5aXVwaH' +
-      'AxamZzM3dsaWdkZ3Q2eGJyIn0.mXjlp9c3l2-NBoS1uaEUdw';
+    mapboxgl.accessToken = 'pk.eyJ1IjoidGhvbWFzbG9yaW5jeiIsImEiOiJjamx5aXVwaHAx'
+        + 'amZzM3dsaWdkZ3Q2eGJyIn0.mXjlp9c3l2-NBoS1uaEUdw';
 
     this.map = new mapboxgl.Map({
       container: 'map',
