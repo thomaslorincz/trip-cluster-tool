@@ -2,13 +2,8 @@
   "extends": "google",
   "rules": {
     "space-infix-ops": "error",
-    "arrow-spacing": [
-      "error",
-      {
-        "before": true,
-        "after": true
-      }
-    ]
+    "arrow-spacing": ["error", {"before": true, "after": true}],
+    "operator-linebreak": ["error", "before"]
   },
   "parserOptions": {
     "ecmaVersion": 2018,
