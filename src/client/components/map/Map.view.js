@@ -173,6 +173,14 @@ export default class MapView extends View {
         this.map.getCanvas().style.cursor = '';
       });
 
+      this.map.on('mouseenter', 'zones', () => {
+        this.map.getCanvas().style.cursor = 'pointer';
+      });
+
+      this.map.on('mouseleave', 'zones', () => {
+        this.map.getCanvas().style.cursor = '';
+      });
+
       this.updateBoundary('district');
     });
   }
