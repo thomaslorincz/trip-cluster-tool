@@ -399,7 +399,6 @@ export default class MapView extends View {
    * @param {number} id
    */
   updateSelected(id) {
-    console.log(id);
     if (this.districtsDrawn) {
       this.map.setFilter('selectedDistrict', ['in', 'District', id]);
     } else if (this.zonesDrawn) {
