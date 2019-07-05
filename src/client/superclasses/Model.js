@@ -1,7 +1,7 @@
-/**
- * Model superclass.
- */
+/** Model superclass */
 export default class Model {
-  // eslint-disable-next-line
-  constructor() {}
+  /** @param {EventEmitter} emitter */
+  constructor(emitter) {
+    this.emitter = emitter;
+  }
 }

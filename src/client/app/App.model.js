@@ -2,13 +2,11 @@ import Model from '../superclasses/Model';
 import * as d3 from 'd3-fetch';
 import FlowLine from '../lib/FlowLine';
 
-/**
- * Model that stores and controls the app's data and state.
- */
+/** Model that stores and controls the app's data and state. */
 export default class AppModel extends Model {
-  // eslint-disable-next-line
-  constructor() {
-    super();
+  /** @param {EventEmitter} emitter */
+  constructor(emitter) {
+    super(emitter);
 
     this.selectedLine = '';
 
@@ -70,9 +68,7 @@ export default class AppModel extends Model {
         });
       }
 
-      document.dispatchEvent(new CustomEvent('controlsUpdated', {
-        detail: this.controlPanel,
-      }));
+      this.emitter.emit('controlsUpdated', this.controlPanel);
     });
 
     /** @type {FlowLine[]} */
@@ -90,7 +86,7 @@ export default class AppModel extends Model {
    * @param {'district'|'zone'} type
    */
   geographySelected({id, type}) {
-    document.dispatchEvent(new CustomEvent('removeClusters'));
+    this.emitter.emit('removeClusters');
     this.selectedLine = '';
     this.controlPanel.lineWeight = -1;
 
@@ -98,7 +94,7 @@ export default class AppModel extends Model {
         && this.controlPanel.geography === id) {
       this.controlPanel.geography = -1;
       this.controlPanel.iteration = 0;
-      document.dispatchEvent(new CustomEvent('removeFlowLines'));
+      this.emitter.emit('removeFlowLines');
     } else {
       this.controlPanel.geography = id;
       this.controlPanel.iteration = 1;
@@ -117,12 +113,8 @@ export default class AppModel extends Model {
       }
     }
 
-    document.dispatchEvent(new CustomEvent('selectedUpdated', {
-      detail: this.controlPanel.geography,
-    }));
-    document.dispatchEvent(new CustomEvent('controlsUpdated', {
-      detail: this.controlPanel,
-    }));
+    this.emitter.emit('selectedUpdated', this.controlPanel.geography);
+    this.emitter.emit('controlsUpdated', this.controlPanel);
   }
 
   /**
@@ -130,7 +122,7 @@ export default class AppModel extends Model {
    * @param {number} lineWeight
    */
   lineSelected({lineKey, lineWeight}) {
-    document.dispatchEvent(new CustomEvent('removeClusters'));
+    this.emitter.emit('removeClusters');
     if (this.selectedLine === lineKey) {
       this.selectedLine = '';
       this.controlPanel.lineWeight = -1;
@@ -138,28 +130,22 @@ export default class AppModel extends Model {
     } else {
       this.selectedLine = lineKey;
       this.controlPanel.lineWeight = lineWeight;
-      document.dispatchEvent(new CustomEvent('addClusters', {
-        detail: {
-          lineKey,
-          clusters: this.flowMatrixWithClusters[lineKey],
-        },
-      }));
+      this.emitter.emit('addClusters', {
+        lineKey,
+        clusters: this.flowMatrixWithClusters[lineKey],
+      });
     }
 
-    document.dispatchEvent(new CustomEvent('controlsUpdated', {
-      detail: this.controlPanel,
-    }));
+    this.emitter.emit('controlsUpdated', this.controlPanel);
   }
 
   /**
    * Runs an iteration of the k-means clustering algorithm.
    */
   nextIteration() {
-    document.dispatchEvent(new CustomEvent('removeClusters'));
+    this.emitter.emit('removeClusters');
     this.controlPanel.iteration++;
-    document.dispatchEvent(new CustomEvent('controlsUpdated', {
-      detail: this.controlPanel,
-    }));
+    this.emitter.emit('controlsUpdated', this.controlPanel);
     this.splitIntoGroups();
   }
 
@@ -168,18 +154,14 @@ export default class AppModel extends Model {
    * toggled on.
    */
   autoIterate() {
-    document.dispatchEvent(new CustomEvent('removeClusters'));
+    this.emitter.emit('removeClusters');
     this.controlPanel.autoIterate = !this.controlPanel.autoIterate;
-    document.dispatchEvent(new CustomEvent('controlsUpdated', {
-      detail: this.controlPanel,
-    }));
+    this.emitter.emit('controlsUpdated', this.controlPanel);
 
     if (this.controlPanel.autoIterate) {
       this.autoIterateInterval = setInterval(() => {
         this.controlPanel.iteration++;
-        document.dispatchEvent(new CustomEvent('controlsUpdated', {
-          detail: this.controlPanel,
-        }));
+        this.emitter.emit('controlsUpdated', this.controlPanel);
         this.splitIntoGroups();
       }, 100);
     } else {
@@ -191,7 +173,7 @@ export default class AppModel extends Model {
    * Decreases the number of flow lines by 1
    */
   decrementFlowLines() {
-    document.dispatchEvent(new CustomEvent('removeClusters'));
+    this.emitter.emit('removeClusters');
     if (this.controlPanel.numFlowLines > 1) {
       this.controlPanel.numFlowLines--;
       this.controlPanel.iteration = 1;
@@ -208,9 +190,7 @@ export default class AppModel extends Model {
             this.controlPanel.numFlowLines
         );
       }
-      document.dispatchEvent(new CustomEvent('controlsUpdated', {
-        detail: this.controlPanel,
-      }));
+      this.emitter.emit('controlsUpdated', this.controlPanel);
     }
   }
 
@@ -218,7 +198,7 @@ export default class AppModel extends Model {
    * Increases the number of flow lines by 1
    */
   incrementFlowLines() {
-    document.dispatchEvent(new CustomEvent('removeClusters'));
+    this.emitter.emit('removeClusters');
     if (this.controlPanel.numFlowLines !== this.maxFlowLines) {
       this.controlPanel.numFlowLines++;
       this.controlPanel.iteration = 1;
@@ -235,9 +215,7 @@ export default class AppModel extends Model {
             this.controlPanel.numFlowLines
         );
       }
-      document.dispatchEvent(new CustomEvent('controlsUpdated', {
-        detail: this.controlPanel,
-      }));
+      this.emitter.emit('controlsUpdated', this.controlPanel);
     }
   }
 
@@ -245,32 +223,24 @@ export default class AppModel extends Model {
    * @param {string} boundary
    */
   updateBoundary(boundary) {
-    document.dispatchEvent(new CustomEvent('removeFlowLines'));
-    document.dispatchEvent(new CustomEvent('removeClusters'));
+    this.emitter.emit('removeFlowLines');
+    this.emitter.emit('removeClusters');
     this.controlPanel.geography = -1;
     this.controlPanel.iteration = 0;
     this.controlPanel.boundary = boundary;
-    document.dispatchEvent(new CustomEvent('selectedUpdated', {
-      detail: this.controlPanel.geography,
-    }));
-    document.dispatchEvent(new CustomEvent('controlsUpdated', {
-      detail: this.controlPanel,
-    }));
-    document.dispatchEvent(new CustomEvent('boundaryUpdated', {
-      detail: this.controlPanel.boundary,
-    }));
+    this.emitter.emit('selectedUpdated', this.controlPanel.geography);
+    this.emitter.emit('controlsUpdated', this.controlPanel);
+    this.emitter.emit('boundaryUpdated', this.controlPanel.boundary);
   }
 
   /**
    * @param {string} mode
    */
   updateMode(mode) {
-    document.dispatchEvent(new CustomEvent('removeClusters'));
+    this.emitter.emit('removeClusters');
     this.controlPanel.iteration = 0;
     this.controlPanel.mode = mode;
-    document.dispatchEvent(new CustomEvent('controlsUpdated', {
-      detail: this.controlPanel,
-    }));
+    this.emitter.emit('controlsUpdated', this.controlPanel);
     if (this.controlPanel.mode === 'total') {
       this.processData(
           this.totalDataMatrix,
@@ -290,12 +260,10 @@ export default class AppModel extends Model {
    * @param {string} purpose
    */
   updatePurpose(purpose) {
-    document.dispatchEvent(new CustomEvent('removeClusters'));
+    this.emitter.emit('removeClusters');
     this.controlPanel.iteration = 0;
     this.controlPanel.purpose = purpose;
-    document.dispatchEvent(new CustomEvent('controlsUpdated', {
-      detail: this.controlPanel,
-    }));
+    this.emitter.emit('controlsUpdated', this.controlPanel);
     if (this.controlPanel.mode === 'total') {
       this.processData(
           this.totalDataMatrix,
@@ -414,7 +382,7 @@ export default class AppModel extends Model {
       this.flowMatrixWithClusters[result[i]].push(this.flowMatrix[i]);
     }
     this.flowLines = AppModel.calcNewFlowLines(this.flowMatrixWithClusters);
-    AppModel.redrawFlowLines(this.flowLines);
+    this.redrawFlowLines(this.flowLines);
   }
 
   /**
@@ -459,7 +427,7 @@ export default class AppModel extends Model {
   /**
    * @param {FlowLine[]} flowLines
    */
-  static redrawFlowLines(flowLines) {
+  redrawFlowLines(flowLines) {
     let minValue = Number.MAX_VALUE;
     let maxValue = 0;
     for (let i = 0; i < flowLines.length; i++) {
@@ -467,13 +435,11 @@ export default class AppModel extends Model {
       minValue = Math.min(flowLines[i].weight, minValue);
     }
 
-    document.dispatchEvent(new CustomEvent('removeFlowLines'));
-    document.dispatchEvent(new CustomEvent('addFlowLines', {
-      detail: {
-        lines: flowLines,
-        min: minValue,
-        max: maxValue,
-      },
-    }));
+    this.emitter.emit('removeFlowLines');
+    this.emitter.emit('addFlowLines', {
+      lines: flowLines,
+      min: minValue,
+      max: maxValue,
+    });
   }
 }

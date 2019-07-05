@@ -1,5 +1,6 @@
 import 'core-js';
 import 'regenerator-runtime/runtime';
+import EventEmitter from 'eventemitter3';
 import AppModel from './app/App.model';
 import AppPresenter from './app/App.presenter';
 import './style.css';
@@ -10,4 +11,5 @@ if (typeof(module.hot) !== 'undefined') {
 }
 
 // Initiate the app
-new AppPresenter(new AppModel(), null);
+const emitter = new EventEmitter();
+new AppPresenter(new AppModel(emitter), null, emitter);
