@@ -3,13 +3,9 @@ import mapboxgl from 'mapbox-gl';
 import proj4 from 'proj4';
 import * as d3 from 'd3-fetch';
 
-/**
- * A view that represents an interactive map.
- */
+/** A view that represents an interactive map. */
 export default class MapView extends View {
-  /**
-   * @param {HTMLElement} container
-   */
+  /** @param {HTMLElement} container */
   constructor(container) {
     super(container);
 
@@ -65,8 +61,8 @@ export default class MapView extends View {
         'source-layer': 'district-btbn5v',
         'type': 'fill',
         'paint': {
-          'fill-color': 'rgba(0,0,255,0.3)',
-          'fill-outline-color': 'rgba(255,255,255,0.1)',
+          'fill-color': 'rgba(0,0,0,0)',
+          'fill-outline-color': 'rgba(0,255,255,1)',
         },
       });
 
@@ -81,7 +77,7 @@ export default class MapView extends View {
         'feature_type': 'fill',
         'paint': {
           'line-width': 6,
-          'line-color': 'black',
+          'line-color': 'rgba(255,0,255,1)',
         },
         'filter': ['in', 'District', -1],
       });
@@ -95,8 +91,7 @@ export default class MapView extends View {
         'source-layer': 'TAZ-6swaau',
         'type': 'fill',
         'paint': {
-          'fill-color': 'rgba(0,0,255,0.3)',
-          'fill-outline-color': 'rgba(255,255,255,0.1)',
+          'fill-outline-color': 'rgba(0,255,255,1)',
         },
       });
 
@@ -111,7 +106,7 @@ export default class MapView extends View {
         'feature_type': 'fill',
         'paint': {
           'line-width': 6,
-          'line-color': 'black',
+          'line-color': 'rgba(255,0,255,1)',
         },
         'filter': ['in', 'TAZ_New', -1],
       });
@@ -290,7 +285,7 @@ export default class MapView extends View {
       originData.features.push({
         'type': 'Feature',
         'properties': {
-          'magnitude': Math.max(cluster.weight * 2, 100),
+          'magnitude': Math.max(cluster.weight * 10, 32),
         },
         'geometry': {
           'type': 'Point',
@@ -304,7 +299,7 @@ export default class MapView extends View {
       destData.features.push({
         'type': 'Feature',
         'properties': {
-          'magnitude': Math.max(cluster.weight * 2, 100),
+          'magnitude': Math.max(cluster.weight * 10, 32),
         },
         'geometry': {
           'type': 'Point',
