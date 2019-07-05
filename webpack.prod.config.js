@@ -71,7 +71,8 @@ module.exports = {
   },
   plugins: [
     new CopyWebpackPlugin([
-      {from: 'assets', to: 'assets'},
+      {from: 'assets/images', to: 'assets/images'},
+      {from: 'assets/data/*.br', to: 'assets/data/*.br'},
     ]),
     new HtmlWebPackPlugin({
       template: './src/client/index.html',
