@@ -91,6 +91,7 @@ export default class MapView extends View {
         'source-layer': 'TAZ-6swaau',
         'type': 'fill',
         'paint': {
+          'fill-color': 'rgba(0,0,0,0)',
           'fill-outline-color': 'rgba(0,255,255,1)',
         },
       });
