@@ -5,9 +5,12 @@ import * as d3 from 'd3-fetch';
 
 /** A view that represents an interactive map. */
 export default class MapView extends View {
-  /** @param {HTMLElement} container */
-  constructor(container) {
-    super(container);
+  /**
+   * @param {HTMLElement} container
+   * @param {EventEmitter} emitter
+   */
+  constructor(container, emitter) {
+    super(container, emitter);
 
     proj4.defs([
       [
@@ -126,12 +129,11 @@ export default class MapView extends View {
           });
           const feature = thisLayerFeatures[0];
           if (feature) {
-            this.container.dispatchEvent(new CustomEvent('lineClicked', {
-              detail: {
-                lineKey: feature.properties['key'],
-                lineWeight: feature.properties['magnitude'],
-              },
-            }));
+            this.emitter.emit(
+                'lineClicked',
+                feature.properties['key'],
+                feature.properties['magnitude']
+            );
             return;
           }
         }
@@ -142,12 +144,10 @@ export default class MapView extends View {
           });
           const feature = thisLayerFeatures[0];
           if (feature) {
-            this.container.dispatchEvent(new CustomEvent('featureClicked', {
-              detail: {
-                id: feature.properties['District'],
-                type: 'district',
-              },
-            }));
+            this.emitter.emit(
+                'districtClicked',
+                feature.properties['District'],
+            );
           }
         } else if (this.zonesDrawn && zones.length > 0) {
           const thisLayerFeatures = districts.filter((d) => {
@@ -155,12 +155,7 @@ export default class MapView extends View {
           });
           const feature = thisLayerFeatures[0];
           if (feature) {
-            this.container.dispatchEvent(new CustomEvent('featureClicked', {
-              detail: {
-                id: feature.properties['TAZ_New'],
-                type: 'zone',
-              },
-            }));
+            this.emitter.emit('zoneClicked', feature.properties['TAZ_New']);
           }
         }
       });
@@ -258,9 +253,7 @@ export default class MapView extends View {
     this.linesDrawn = true;
   }
 
-  /**
-   * Removes all drawn lines
-   */
+  /** Removes all drawn lines */
   removeFlowLines() {
     if (this.linesDrawn) {
       this.map.removeLayer('lineArrows');
@@ -359,9 +352,7 @@ export default class MapView extends View {
     this.clustersDrawn = true;
   }
 
-  /**
-   * Removes all drawn cluster circles
-   */
+  /** Removes all drawn cluster circles */
   removeClusters() {
     if (this.clustersDrawn) {
       this.map.removeLayer('originLayer');
@@ -374,9 +365,7 @@ export default class MapView extends View {
     }
   }
 
-  /**
-   * @param {'district'|'zone'} type
-   */
+  /** @param {'district'|'zone'} type */
   updateBoundary(type) {
     if (type === 'district') {
       this.map.setLayoutProperty('districts', 'visibility', 'visible');
@@ -395,9 +384,7 @@ export default class MapView extends View {
     }
   }
 
-  /**
-   * @param {number} id
-   */
+  /** @param {number} id */
   updateSelected(id) {
     if (this.districtsDrawn) {
       this.map.setFilter('selectedDistrict', ['in', 'District', id]);

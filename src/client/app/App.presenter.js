@@ -5,7 +5,7 @@ import ControlPanelView from '../components/control-panel/ControlPanel.view';
 import ControlPanelPresenter
   from '../components/control-panel/ControlPanel.presenter';
 
-// eslint-disable-next-line
+/** @class */
 export default class AppPresenter extends Presenter {
   /**
    * @param {AppModel} model
@@ -13,52 +13,43 @@ export default class AppPresenter extends Presenter {
    * @param {EventEmitter} emitter
    */
   constructor(model, view, emitter) {
-    super(model, view);
+    super(model, view, emitter);
 
     this.emitter = emitter;
 
-    this.mapView = new MapView(document.getElementById('map'));
-    new MapPresenter(this.model, this.mapView);
+    this.mapView = new MapView(document.getElementById('map'), this.emitter);
+    new MapPresenter(this.model, this.mapView, this.emitter);
 
     this.emitter.on('selectedUpdated', (selected) => {
-      document.dispatchEvent(new CustomEvent('selectedUpdated', {
-        detail: selected,
-      }));
+      this.mapView.updateSelected(selected);
     });
 
     this.emitter.on('boundaryUpdated', (boundary) => {
-      document.dispatchEvent(new CustomEvent('boundaryUpdated', {
-        detail: boundary,
-      }));
+      this.mapView.updateBoundary(boundary);
     });
 
     this.emitter.on('removeFlowLines', () => {
-      document.dispatchEvent(new CustomEvent('removeFlowLines'));
+      this.mapView.removeFlowLines();
     });
     this.emitter.on('addFlowLines', (data) => {
-      document.dispatchEvent((new CustomEvent('addFlowLines', {
-        detail: data,
-      })));
+      this.mapView.addFlowLines(data);
     });
 
     this.emitter.on('removeClusters', () => {
-      document.dispatchEvent(new CustomEvent('removeClusters'));
+      this.mapView.removeClusters();
     });
     this.emitter.on('addClusters', (clusterData) => {
-      document.dispatchEvent(new CustomEvent('addClusters', {
-        detail: clusterData,
-      }));
+      this.mapView.addClusters(clusterData);
     });
 
     this.controlPanelView = new ControlPanelView(
-        document.getElementById('control-panel')
+        document.getElementById('control-panel'),
+        this.emitter
     );
-    new ControlPanelPresenter(this.model, this.controlPanelView);
+    new ControlPanelPresenter(this.model, this.controlPanelView, this.emitter);
 
     this.emitter.on('controlsUpdated', (controlPanel) => {
-      document.dispatchEvent(new CustomEvent('controlsUpdated', {
-        detail: controlPanel,
-      }));
+      this.controlPanelView.draw(controlPanel);
     });
   }
 }

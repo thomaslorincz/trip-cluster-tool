@@ -8,40 +8,33 @@ export default class ControlPanelPresenter extends Presenter {
   /**
    * @param {AppModel} model
    * @param {ControlPanelView} view
+   * @param {EventEmitter} emitter
    */
-  constructor(model, view) {
-    super(model, view);
+  constructor(model, view, emitter) {
+    super(model, view, emitter);
 
-    document.addEventListener('controlsUpdated', (event) => {
-      this.view.draw(event.detail);
-    });
-
-    this.view.container.addEventListener('nextIterationClicked', () => {
+    this.emitter.on('nextIterationClicked', () => {
       this.model.nextIteration();
     });
 
-    this.view.container.addEventListener('autoIterateClicked', () => {
+    this.emitter.on('autoIterateClicked', () => {
       this.model.autoIterate();
     });
 
-    this.view.container.addEventListener('decrementClicked', () => {
+    this.emitter.on('decrementClicked', () => {
       this.model.decrementFlowLines();
     });
 
-    this.view.container.addEventListener('incrementClicked', () => {
+    this.emitter.on('incrementClicked', () => {
       this.model.incrementFlowLines();
     });
 
-    this.view.container.addEventListener('boundaryClicked', (event) => {
-      this.model.updateBoundary(event.detail);
+    this.emitter.on('boundaryClicked', (boundary) => {
+      this.model.updateBoundary(boundary);
     });
 
-    this.view.container.addEventListener('modeClicked', (event) => {
-      this.model.updateMode(event.detail);
-    });
-
-    this.view.container.addEventListener('purposeClicked', (event) => {
-      this.model.updatePurpose(event.detail);
+    this.emitter.on('modeClicked', (mode) => {
+      this.model.updateMode(mode);
     });
   }
 }
