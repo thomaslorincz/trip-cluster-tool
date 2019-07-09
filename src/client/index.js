@@ -1,5 +1,3 @@
-import 'core-js';
-import 'regenerator-runtime/runtime';
 import EventEmitter from 'eventemitter3';
 import AppModel from './app/App.model';
 import AppPresenter from './app/App.presenter';
