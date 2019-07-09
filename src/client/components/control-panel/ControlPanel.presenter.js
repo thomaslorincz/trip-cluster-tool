@@ -13,14 +13,6 @@ export default class ControlPanelPresenter extends Presenter {
   constructor(model, view, emitter) {
     super(model, view, emitter);
 
-    this.emitter.on('nextIterationClicked', () => {
-      this.model.nextIteration();
-    });
-
-    this.emitter.on('autoIterateClicked', () => {
-      this.model.autoIterate();
-    });
-
     this.emitter.on('decrementClicked', () => {
       this.model.decrementFlowLines();
     });

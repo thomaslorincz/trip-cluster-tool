@@ -12,18 +12,6 @@ export default class ControlPanelView extends View {
     this.selectedGeography = document.getElementById('selected-geography');
     this.selectedLine = document.getElementById('selected-line');
 
-    this.iterationNumber = document.getElementById('iteration-number');
-
-    this.nextIterationButton = document.getElementById('next-iteration-button');
-    this.nextIterationButton.addEventListener('click', () => {
-      this.emitter.emit('nextIterationClicked');
-    });
-
-    this.autoIterateButton = document.getElementById('auto-iterate-button');
-    this.autoIterateButton.addEventListener('click', () => {
-      this.emitter.emit('autoIterateClicked');
-    });
-
     this.flowLinesDecrement = document.getElementById('flow-lines-decrement');
     this.flowLinesDecrement.addEventListener('click', () => {
       this.emitter.emit('decrementClicked');
@@ -54,14 +42,11 @@ export default class ControlPanelView extends View {
   /**
    * @param {number} geography
    * @param {number} lineWeight
-   * @param {number} iteration
-   * @param {boolean} autoIterate
    * @param {number} numFlowLines
    * @param {string} boundary
    * @param {string} mode
    */
-  draw({geography, lineWeight, iteration, autoIterate, numFlowLines, boundary,
-    mode}) {
+  draw({geography, lineWeight, numFlowLines, boundary, mode}) {
     if (geography === -1) {
       this.selectedGeography.innerText = 'Nothing Selected';
       this.selectedGeography.classList.remove('selected-text');
@@ -78,19 +63,6 @@ export default class ControlPanelView extends View {
       this.selectedLine.innerText = '';
     } else {
       this.selectedLine.innerText = `Line Trips: ${lineWeight}`;
-    }
-
-    this.iterationNumber.innerText = iteration.toString();
-    if (iteration === 0) {
-      this.iterationNumber.classList.remove('selected-text');
-    } else {
-      this.iterationNumber.classList.add('selected-text');
-    }
-
-    if (autoIterate) {
-      this.autoIterateButton.classList.add('pressed');
-    } else {
-      this.autoIterateButton.classList.remove('pressed');
     }
 
     this.numFlowLines.innerText = numFlowLines.toString();
