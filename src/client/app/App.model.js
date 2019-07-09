@@ -17,61 +17,42 @@ export default class AppModel extends Model {
       autoIterate: false,
       numFlowLines: 15,
       boundary: 'district',
-      mode: 'total',
-      purpose: 'W',
+      mode: 'X', // Modes: X for All, A for Auto, T for Transit, V for Active
     };
 
     this.maxFlowLines = 30;
 
-    this.totalDataMatrix = {};
-    this.transitDataMatrix = {};
+    this.totalData = [];
 
     Promise.all([
-      d3.csv('assets/data/result_total.csv'),
-      d3.csv('assets/data/result_transit.csv'),
-    ]).then(([totalData, transitData]) => {
-      for (let i = 0; i < transitData.length; i++) {
-        const transitDatum = transitData[i];
-        if (!(transitDatum['purpose'] in this.transitDataMatrix)) {
-          this.transitDataMatrix[transitDatum['purpose']] = [];
-        }
-
-        this.transitDataMatrix[transitDatum['purpose']].push({
-          originX: parseFloat(transitDatum['origin_x']),
-          originY: parseFloat(transitDatum['origin_y']),
-          destX: parseFloat(transitDatum['dest_x']),
-          destY: parseFloat(transitDatum['dest_y']),
-          weight: parseInt(transitDatum['weight']),
-          originZone: parseInt(transitDatum['origin_zone']),
-          destZone: parseInt(transitDatum['dest_zone']),
-          originDistrict: parseInt(transitDatum['origin_district']),
-          destDistrict: parseInt(transitDatum['dest_district']),
-        });
-      }
-
+      d3.csv('assets/data/od_xy.csv'),
+    ]).then(([totalData]) => {
       for (let i = 0; i < totalData.length; i++) {
         const totalDatum = totalData[i];
-        if (!(totalDatum['purpose'] in this.totalDataMatrix)) {
-          this.totalDataMatrix[totalDatum['purpose']] = [];
-        }
 
-        this.totalDataMatrix[totalDatum['purpose']].push({
-          originX: parseFloat(totalDatum['origin_x']),
-          originY: parseFloat(totalDatum['origin_y']),
-          destX: parseFloat(totalDatum['dest_x']),
-          destY: parseFloat(totalDatum['dest_y']),
-          weight: parseInt(totalDatum['weight']),
+        this.totalData.push({
           originZone: parseInt(totalDatum['origin_zone']),
           destZone: parseInt(totalDatum['dest_zone']),
           originDistrict: parseInt(totalDatum['origin_district']),
           destDistrict: parseInt(totalDatum['dest_district']),
+          mode: totalDatum['mode_category'],
+          originX: parseFloat(totalDatum['origin_x']),
+          originY: parseFloat(totalDatum['origin_y']),
+          destX: parseFloat(totalDatum['dest_x']),
+          destY: parseFloat(totalDatum['dest_y']),
+          weight: parseInt(totalDatum['count']),
         });
       }
+
+      this.activeData = this.totalData.filter((datum) => {
+        return this.controlPanel.mode === 'X'
+            || datum.mode === this.controlPanel.mode;
+      });
 
       this.emitter.emit('controlsUpdated', this.controlPanel);
     });
 
-    /** @type {FlowLine[]} */
+    /* @type {FlowLine[]} */
     this.flowLines = [];
 
     this.flowMatrix = [];
@@ -85,7 +66,7 @@ export default class AppModel extends Model {
    * @param {number} id
    * @param {'district'|'zone'} type
    */
-  geographySelected({id, type}) {
+  geographySelected(id, type) {
     this.emitter.emit('removeClusters');
     this.selectedLine = '';
     this.controlPanel.lineWeight = -1;
@@ -98,19 +79,7 @@ export default class AppModel extends Model {
     } else {
       this.controlPanel.geography = id;
       this.controlPanel.iteration = 1;
-      if (this.controlPanel.mode === 'total') {
-        this.processData(
-            this.totalDataMatrix,
-            this.controlPanel.purpose,
-            this.controlPanel.numFlowLines
-        );
-      } else {
-        this.processData(
-            this.transitDataMatrix,
-            this.controlPanel.purpose,
-            this.controlPanel.numFlowLines
-        );
-      }
+      this.processData(this.activeData, this.controlPanel.numFlowLines);
     }
 
     this.emitter.emit('selectedUpdated', this.controlPanel.geography);
@@ -121,7 +90,7 @@ export default class AppModel extends Model {
    * @param {string} lineKey
    * @param {number} lineWeight
    */
-  lineSelected({lineKey, lineWeight}) {
+  lineSelected(lineKey, lineWeight) {
     this.emitter.emit('removeClusters');
     if (this.selectedLine === lineKey) {
       this.selectedLine = '';
@@ -169,59 +138,29 @@ export default class AppModel extends Model {
     }
   }
 
-  /**
-   * Decreases the number of flow lines by 1
-   */
+  /** Decreases the number of flow lines by 1 */
   decrementFlowLines() {
     this.emitter.emit('removeClusters');
     if (this.controlPanel.numFlowLines > 1) {
       this.controlPanel.numFlowLines--;
       this.controlPanel.iteration = 1;
-      if (this.controlPanel.mode === 'total') {
-        this.processData(
-            this.totalDataMatrix,
-            this.controlPanel.purpose,
-            this.controlPanel.numFlowLines
-        );
-      } else {
-        this.processData(
-            this.transitDataMatrix,
-            this.controlPanel.purpose,
-            this.controlPanel.numFlowLines
-        );
-      }
+      this.processData(this.activeData, this.controlPanel.numFlowLines);
       this.emitter.emit('controlsUpdated', this.controlPanel);
     }
   }
 
-  /**
-   * Increases the number of flow lines by 1
-   */
+  /** Increases the number of flow lines by 1 */
   incrementFlowLines() {
     this.emitter.emit('removeClusters');
     if (this.controlPanel.numFlowLines !== this.maxFlowLines) {
       this.controlPanel.numFlowLines++;
       this.controlPanel.iteration = 1;
-      if (this.controlPanel.mode === 'total') {
-        this.processData(
-            this.totalDataMatrix,
-            this.controlPanel.purpose,
-            this.controlPanel.numFlowLines
-        );
-      } else {
-        this.processData(
-            this.transitDataMatrix,
-            this.controlPanel.purpose,
-            this.controlPanel.numFlowLines
-        );
-      }
+      this.processData(this.activeData, this.controlPanel.numFlowLines);
       this.emitter.emit('controlsUpdated', this.controlPanel);
     }
   }
 
-  /**
-   * @param {string} boundary
-   */
+  /** @param {string} boundary */
   updateBoundary(boundary) {
     this.emitter.emit('removeFlowLines');
     this.emitter.emit('removeClusters');
@@ -233,50 +172,17 @@ export default class AppModel extends Model {
     this.emitter.emit('boundaryUpdated', this.controlPanel.boundary);
   }
 
-  /**
-   * @param {string} mode
-   */
+  /** @param {string} mode */
   updateMode(mode) {
     this.emitter.emit('removeClusters');
     this.controlPanel.iteration = 0;
     this.controlPanel.mode = mode;
+    this.activeData = this.totalData.filter((datum) => {
+      return this.controlPanel.mode === 'X'
+          || datum.mode === this.controlPanel.mode;
+    });
     this.emitter.emit('controlsUpdated', this.controlPanel);
-    if (this.controlPanel.mode === 'total') {
-      this.processData(
-          this.totalDataMatrix,
-          this.controlPanel.purpose,
-          this.controlPanel.numFlowLines
-      );
-    } else {
-      this.processData(
-          this.transitDataMatrix,
-          this.controlPanel.purpose,
-          this.controlPanel.numFlowLines
-      );
-    }
-  }
-
-  /**
-   * @param {string} purpose
-   */
-  updatePurpose(purpose) {
-    this.emitter.emit('removeClusters');
-    this.controlPanel.iteration = 0;
-    this.controlPanel.purpose = purpose;
-    this.emitter.emit('controlsUpdated', this.controlPanel);
-    if (this.controlPanel.mode === 'total') {
-      this.processData(
-          this.totalDataMatrix,
-          this.controlPanel.purpose,
-          this.controlPanel.numFlowLines
-      );
-    } else {
-      this.processData(
-          this.transitDataMatrix,
-          this.controlPanel.purpose,
-          this.controlPanel.numFlowLines
-      );
-    }
+    this.processData(this.activeData, this.controlPanel.numFlowLines);
   }
 
   /**
@@ -285,24 +191,20 @@ export default class AppModel extends Model {
    * an initial cluster center.
    * @see https://medium.com/@peterkellyonline/weighted-random-selection-3ff222917eb6
    * @param {[]} dataMatrix
-   * @param {string} purpose
    * @param {number} numFlowLines
    */
-  processData(dataMatrix, purpose, numFlowLines) {
+  processData(dataMatrix, numFlowLines) {
     let totalWeight = 0;
     this.flowMatrix = [];
 
-    const purposeArray = dataMatrix[purpose];
-    for (let i = 0; i < purposeArray.length; i++) {
-      if (this.controlPanel.boundary === 'district') {
-        if (purposeArray[i].destDistrict === this.controlPanel.geography) {
-          this.flowMatrix.push(purposeArray[i]);
-        }
-      } else if (this.controlPanel.boundary === 'zone') {
-        if (purposeArray[i].destZone === this.controlPanel.geography) {
-          this.flowMatrix.push(purposeArray[i]);
-        }
-      }
+    if (this.controlPanel.boundary === 'district') {
+      this.flowMatrix = dataMatrix.filter((datum) => {
+        return datum.destDistrict === this.controlPanel.geography;
+      });
+    } else if (this.controlPanel.boundary === 'zone') {
+      this.flowMatrix = dataMatrix.filter((datum) => {
+        return datum.destZone === this.controlPanel.geography;
+      });
     }
 
     for (let i = 0; i < this.flowMatrix.length; i++) {
@@ -353,12 +255,12 @@ export default class AppModel extends Model {
 
     const result = new Array(this.flowMatrix.length);
     for (let i = 0; i < this.flowMatrix.length; i++) {
-      /** @type {FlowLine} */
+      /* @type {FlowLine} */
       const datum = this.flowMatrix[i];
       let group = 0;
       let minDist = Number.POSITIVE_INFINITY;
       for (let j = 0; j < this.flowLines.length; j++) {
-        /** @type {FlowLine} */
+        /* @type {FlowLine} */
         const flowLine = this.flowLines[j];
 
         // Euclidean distance
@@ -399,7 +301,7 @@ export default class AppModel extends Model {
       let originX = 0;
       let originY = 0;
       for (let i = 0; i < flowLines.length; i++) {
-        /** @type {FlowLine} */
+        /* @type {FlowLine} */
         const flowLine = flowLines[i];
         if (flowLine.weight === 0) {
           continue;
@@ -424,9 +326,7 @@ export default class AppModel extends Model {
     return newFlowLines;
   }
 
-  /**
-   * @param {FlowLine[]} flowLines
-   */
+  /** @param {FlowLine[]} flowLines */
   redrawFlowLines(flowLines) {
     let minValue = Number.MAX_VALUE;
     let maxValue = 0;

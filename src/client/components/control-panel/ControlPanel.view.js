@@ -1,14 +1,13 @@
 import View from '../../superclasses/View';
 
-/**
- * A view that represents a panel with process controls and information.
- */
+/** A view that represents a panel with process controls and information. */
 export default class ControlPanelView extends View {
   /**
    * @param {HTMLElement} container
+   * @param {EventEmitter} emitter
    */
-  constructor(container) {
-    super(container);
+  constructor(container, emitter) {
+    super(container, emitter);
 
     this.selectedGeography = document.getElementById('selected-geography');
     this.selectedLine = document.getElementById('selected-line');
@@ -17,50 +16,37 @@ export default class ControlPanelView extends View {
 
     this.nextIterationButton = document.getElementById('next-iteration-button');
     this.nextIterationButton.addEventListener('click', () => {
-      this.container.dispatchEvent(new CustomEvent('nextIterationClicked'));
+      this.emitter.emit('nextIterationClicked');
     });
 
     this.autoIterateButton = document.getElementById('auto-iterate-button');
     this.autoIterateButton.addEventListener('click', () => {
-      this.container.dispatchEvent(new CustomEvent('autoIterateClicked'));
+      this.emitter.emit('autoIterateClicked');
     });
 
     this.flowLinesDecrement = document.getElementById('flow-lines-decrement');
     this.flowLinesDecrement.addEventListener('click', () => {
-      this.container.dispatchEvent(new CustomEvent('decrementClicked'));
+      this.emitter.emit('decrementClicked');
     });
 
     this.numFlowLines = document.getElementById('flow-lines');
 
     this.flowLinesIncrement = document.getElementById('flow-lines-increment');
     this.flowLinesIncrement.addEventListener('click', () => {
-      this.container.dispatchEvent(new CustomEvent('incrementClicked'));
+      this.emitter.emit('incrementClicked');
     });
 
     this.boundaryEntries = document.querySelectorAll('.boundary-entry');
     this.boundaryEntries.forEach((entry) => {
       entry.addEventListener('click', (event) => {
-        this.container.dispatchEvent(new CustomEvent('boundaryClicked', {
-          detail: event.target.dataset.value,
-        }));
+        this.emitter.emit('boundaryClicked', event.target.dataset.value);
       });
     });
 
     this.modeEntries = document.querySelectorAll('.mode-entry');
     this.modeEntries.forEach((entry) => {
       entry.addEventListener('click', (event) => {
-        this.container.dispatchEvent(new CustomEvent('modeClicked', {
-          detail: event.target.dataset.value,
-        }));
-      });
-    });
-
-    this.purposeEntries = document.querySelectorAll('.purpose-entry');
-    this.purposeEntries.forEach((entry) => {
-      entry.addEventListener('click', (event) => {
-        this.container.dispatchEvent(new CustomEvent('purposeClicked', {
-          detail: event.target.dataset.value,
-        }));
+        this.emitter.emit('modeClicked', event.target.dataset.value);
       });
     });
   }
@@ -73,10 +59,9 @@ export default class ControlPanelView extends View {
    * @param {number} numFlowLines
    * @param {string} boundary
    * @param {string} mode
-   * @param {string} purpose
    */
   draw({geography, lineWeight, iteration, autoIterate, numFlowLines, boundary,
-    mode, purpose}) {
+    mode}) {
     if (geography === -1) {
       this.selectedGeography.innerText = 'Nothing Selected';
       this.selectedGeography.classList.remove('selected-text');
@@ -128,13 +113,6 @@ export default class ControlPanelView extends View {
       selectedMode.querySelector('.content-radio-button').innerHTML
           = 'radio_button_checked';
       selectedMode.classList.add('selected');
-    }
-
-    const selectedPurpose = document.getElementById(`purpose-${purpose}`);
-    if (selectedPurpose) {
-      selectedPurpose.querySelector('.content-radio-button').innerHTML
-          = 'radio_button_checked';
-      selectedPurpose.classList.add('selected');
     }
   }
 }

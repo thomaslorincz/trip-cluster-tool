@@ -31,11 +31,6 @@ module.exports = {
         },
       },
       {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        loader: 'babel-loader',
-      },
-      {
         test: /\.html$/,
         use: [{loader: 'html-loader'}],
       },
@@ -47,7 +42,8 @@ module.exports = {
   },
   plugins: [
     new CopyWebpackPlugin([
-      {from: 'assets', to: 'assets'},
+      {from: 'assets/images', to: 'assets/images'},
+      {from: 'assets/data/*.br', to: 'assets/data', flatten: true},
     ]),
     new HtmlWebPackPlugin({
       template: './src/client/index.html',

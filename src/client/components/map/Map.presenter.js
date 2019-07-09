@@ -8,40 +8,21 @@ export default class MapPresenter extends Presenter {
   /**
    * @param {AppModel} model
    * @param {MapView} view
+   * @param {EventEmitter} emitter
    */
-  constructor(model, view) {
-    super(model, view);
+  constructor(model, view, emitter) {
+    super(model, view, emitter);
 
-    document.addEventListener('selectedUpdated', (event) => {
-      this.view.updateSelected(event.detail);
+    this.emitter.on('districtClicked', (id) => {
+      this.model.geographySelected(id, 'district');
     });
 
-    document.addEventListener('addFlowLines', (event) => {
-      this.view.addFlowLines(event.detail);
+    this.emitter.on('zoneClicked', (id) => {
+      this.model.geographySelected(id, 'zone');
     });
 
-    document.addEventListener('removeFlowLines', () => {
-      this.view.removeFlowLines();
-    });
-
-    document.addEventListener('addClusters', (event) => {
-      this.view.addClusters(event.detail);
-    });
-
-    document.addEventListener('removeClusters', () => {
-      this.view.removeClusters();
-    });
-
-    document.addEventListener('boundaryUpdated', (event) => {
-      this.view.updateBoundary(event.detail);
-    });
-
-    this.view.container.addEventListener('featureClicked', (event) => {
-      this.model.geographySelected(event.detail);
-    });
-
-    this.view.container.addEventListener('lineClicked', (event) => {
-      this.model.lineSelected(event.detail);
+    this.emitter.on('lineClicked', (key, weight) => {
+      this.model.lineSelected(key, weight);
     });
   }
 }
