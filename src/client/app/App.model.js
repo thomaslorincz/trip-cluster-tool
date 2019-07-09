@@ -13,8 +13,6 @@ export default class AppModel extends Model {
     this.controlPanel = {
       geography: -1,
       lineWeight: -1,
-      iteration: 0,
-      autoIterate: false,
       numFlowLines: 15,
       boundary: 'district',
       mode: 'X', // Modes: X for All, A for Auto, T for Transit, V for Active
@@ -58,8 +56,6 @@ export default class AppModel extends Model {
     this.flowMatrix = [];
 
     this.flowMatrixWithClusters = {};
-
-    this.autoIterateInterval = null;
   }
 
   /**
@@ -74,11 +70,9 @@ export default class AppModel extends Model {
     if (this.controlPanel.boundary === type
         && this.controlPanel.geography === id) {
       this.controlPanel.geography = -1;
-      this.controlPanel.iteration = 0;
       this.emitter.emit('removeFlowLines');
     } else {
       this.controlPanel.geography = id;
-      this.controlPanel.iteration = 1;
       this.processData(this.activeData, this.controlPanel.numFlowLines);
     }
 
@@ -108,42 +102,11 @@ export default class AppModel extends Model {
     this.emitter.emit('controlsUpdated', this.controlPanel);
   }
 
-  /**
-   * Runs an iteration of the k-means clustering algorithm.
-   */
-  nextIteration() {
-    this.emitter.emit('removeClusters');
-    this.controlPanel.iteration++;
-    this.emitter.emit('controlsUpdated', this.controlPanel);
-    this.splitIntoGroups();
-  }
-
-  /**
-   * Continuously runs new iterations while thr auto-iterate toggle switch is
-   * toggled on.
-   */
-  autoIterate() {
-    this.emitter.emit('removeClusters');
-    this.controlPanel.autoIterate = !this.controlPanel.autoIterate;
-    this.emitter.emit('controlsUpdated', this.controlPanel);
-
-    if (this.controlPanel.autoIterate) {
-      this.autoIterateInterval = setInterval(() => {
-        this.controlPanel.iteration++;
-        this.emitter.emit('controlsUpdated', this.controlPanel);
-        this.splitIntoGroups();
-      }, 100);
-    } else {
-      clearInterval(this.autoIterateInterval);
-    }
-  }
-
   /** Decreases the number of flow lines by 1 */
   decrementFlowLines() {
     this.emitter.emit('removeClusters');
     if (this.controlPanel.numFlowLines > 1) {
       this.controlPanel.numFlowLines--;
-      this.controlPanel.iteration = 1;
       this.processData(this.activeData, this.controlPanel.numFlowLines);
       this.emitter.emit('controlsUpdated', this.controlPanel);
     }
@@ -154,7 +117,6 @@ export default class AppModel extends Model {
     this.emitter.emit('removeClusters');
     if (this.controlPanel.numFlowLines !== this.maxFlowLines) {
       this.controlPanel.numFlowLines++;
-      this.controlPanel.iteration = 1;
       this.processData(this.activeData, this.controlPanel.numFlowLines);
       this.emitter.emit('controlsUpdated', this.controlPanel);
     }
@@ -165,7 +127,6 @@ export default class AppModel extends Model {
     this.emitter.emit('removeFlowLines');
     this.emitter.emit('removeClusters');
     this.controlPanel.geography = -1;
-    this.controlPanel.iteration = 0;
     this.controlPanel.boundary = boundary;
     this.emitter.emit('selectedUpdated', this.controlPanel.geography);
     this.emitter.emit('controlsUpdated', this.controlPanel);
@@ -175,7 +136,6 @@ export default class AppModel extends Model {
   /** @param {string} mode */
   updateMode(mode) {
     this.emitter.emit('removeClusters');
-    this.controlPanel.iteration = 0;
     this.controlPanel.mode = mode;
     this.activeData = this.totalData.filter((datum) => {
       return this.controlPanel.mode === 'X'
@@ -248,42 +208,45 @@ export default class AppModel extends Model {
    * lines into a number of cluster groups.
    */
   splitIntoGroups() {
-    this.flowMatrixWithClusters = {};
-    for (let i = 0; i < this.flowLines.length; i++) {
-      this.flowMatrixWithClusters[i] = [];
-    }
-
-    const result = new Array(this.flowMatrix.length);
-    for (let i = 0; i < this.flowMatrix.length; i++) {
-      /* @type {FlowLine} */
-      const datum = this.flowMatrix[i];
-      let group = 0;
-      let minDist = Number.POSITIVE_INFINITY;
-      for (let j = 0; j < this.flowLines.length; j++) {
-        /* @type {FlowLine} */
-        const flowLine = this.flowLines[j];
-
-        // Euclidean distance
-        const currentDist = Math.sqrt(
-            Math.pow(datum.originX - flowLine.originX, 2)
-            + Math.pow(datum.originY - flowLine.originY, 2)
-            + Math.pow(datum.destX - flowLine.destX, 2)
-            + Math.pow(datum.destY - flowLine.destY, 2)
-        );
-
-        if (currentDist < minDist) {
-          group = j;
-          minDist = currentDist;
-        }
+    for (let n = 0; n < 50; n++) {
+      this.flowMatrixWithClusters = {};
+      for (let i = 0; i < this.flowLines.length; i++) {
+        this.flowMatrixWithClusters[i] = [];
       }
 
-      result[i] = group;
+      const result = new Array(this.flowMatrix.length);
+      for (let i = 0; i < this.flowMatrix.length; i++) {
+        /* @type {FlowLine} */
+        const datum = this.flowMatrix[i];
+        let group = 0;
+        let minDist = Number.POSITIVE_INFINITY;
+        for (let j = 0; j < this.flowLines.length; j++) {
+          /* @type {FlowLine} */
+          const flowLine = this.flowLines[j];
+
+          // Euclidean distance
+          const currentDist = Math.sqrt(
+              Math.pow(datum.originX - flowLine.originX, 2)
+              + Math.pow(datum.originY - flowLine.originY, 2)
+              + Math.pow(datum.destX - flowLine.destX, 2)
+              + Math.pow(datum.destY - flowLine.destY, 2)
+          );
+
+          if (currentDist < minDist) {
+            group = j;
+            minDist = currentDist;
+          }
+        }
+
+        result[i] = group;
+      }
+
+      for (let i = 0; i < this.flowMatrix.length; i++) {
+        this.flowMatrixWithClusters[result[i]].push(this.flowMatrix[i]);
+      }
+      this.flowLines = AppModel.calcNewFlowLines(this.flowMatrixWithClusters);
     }
 
-    for (let i = 0; i < this.flowMatrix.length; i++) {
-      this.flowMatrixWithClusters[result[i]].push(this.flowMatrix[i]);
-    }
-    this.flowLines = AppModel.calcNewFlowLines(this.flowMatrixWithClusters);
     this.redrawFlowLines(this.flowLines);
   }
 
