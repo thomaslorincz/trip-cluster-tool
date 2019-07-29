@@ -1,9 +1,9 @@
 import Presenter from '../superclasses/Presenter';
-import MapView from '../components/map/Map.view';
-import MapPresenter from '../components/map/Map.presenter';
-import ControlPanelView from '../components/control-panel/ControlPanel.view';
+import MapView from '../components/map/MapView';
+import MapPresenter from '../components/map/MapPresenter';
+import ControlPanelView from '../components/control-panel/ControlPanelView';
 import ControlPanelPresenter
-  from '../components/control-panel/ControlPanel.presenter';
+  from '../components/control-panel/ControlPanelPresenter';
 
 /** @class */
 export default class AppPresenter extends Presenter {
