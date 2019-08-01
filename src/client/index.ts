@@ -1,4 +1,4 @@
-import EventEmitter from 'eventemitter3';
+import * as EventEmitter from 'eventemitter3';
 import AppModel from './app/AppModel';
 import AppPresenter from './app/AppPresenter';
 import './style.css';

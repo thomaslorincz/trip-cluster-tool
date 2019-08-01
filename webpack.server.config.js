@@ -3,7 +3,7 @@ const nodeExternals = require('webpack-node-externals');
 
 module.exports = (env, argv) => {
   let serverPath = './src/server/server.';
-  serverPath += (argv.mode === 'production') ? 'prod.js' : 'dev.js';
+  serverPath += (argv.mode === 'production') ? 'prod.ts' : 'dev.ts';
 
   return ({
     entry: {
