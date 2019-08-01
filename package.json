@@ -7,10 +7,10 @@
     "npm": ">=6.0.0"
   },
   "scripts": {
-    "buildDev": "rimraf dist && webpack --mode development --config webpack.server.config.js && webpack --mode development --config webpack.dev.config.js",
-    "dev": "npm run buildDev && npm start",
-    "buildProd": "rimraf dist && webpack --mode production --config webpack.server.config.js && webpack --mode production --config webpack.prod.config.js",
-    "prod": "npm run buildProd && npm start",
+    "build-dev": "rimraf dist && webpack --mode development --config webpack.server.config.js && webpack --mode development --config webpack.dev.config.js",
+    "dev": "npm run build-dev && npm start",
+    "build-prod": "rimraf dist && webpack --mode production --config webpack.server.config.js && webpack --mode production --config webpack.prod.config.js",
+    "prod": "npm run build-prod && npm start",
     "start": "node ./dist/server.js"
   },
   "repository": {
