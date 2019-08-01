@@ -17,17 +17,28 @@ module.exports = {
     contentBase: './dist',
     hot: true,
   },
+  resolve: {
+    extensions: ['.ts', '.js']
+  },
   module: {
     rules: [
       {
         enforce: 'pre',
-        test: /\.js$/,
+        test: /\.(ts|js)$/,
         exclude: /node_modules/,
         loader: 'eslint-loader',
         options: {
           emitWarning: true,
           failOnError: false,
           failOnWarning: false,
+        },
+      },
+      {
+        test: /\.ts$/,
+        loader: 'ts-loader',
+        exclude: /node_modules/,
+        options: {
+          configFile: 'tsconfig.dev.json',
         },
       },
       {

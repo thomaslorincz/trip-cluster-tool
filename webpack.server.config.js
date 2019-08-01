@@ -21,5 +21,17 @@ module.exports = (env, argv) => {
       __filename: false,
     },
     externals: [nodeExternals()],
+    module: {
+      rules: [
+        {
+          test: /\.ts$/,
+          loader: 'ts-loader',
+          exclude: /node_modules/,
+          options: {
+            configFile: 'tsconfig.prod.json',
+          },
+        },
+      ],
+    },
   });
 };
