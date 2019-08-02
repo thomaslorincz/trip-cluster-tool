@@ -11,7 +11,7 @@ export default class AppModel extends Model {
   private lineWeight: number = -1;
   private numFlowLines: number = 15;
   private boundary: string = 'district';
-  private mode: string = 'all';
+  private mode: string = 'All';
   private readonly maxFlowLines: number = 30;
   private readonly totalData: ODDatum[] = [];
   private activeData: ODDatum[] = [];
@@ -43,7 +43,7 @@ export default class AppModel extends Model {
       }
 
       this.activeData = this.totalData.filter((datum: ODDatum): boolean => {
-        return this.mode === 'all' || datum.mode === this.mode;
+        return this.mode === 'All' || datum.mode === this.mode;
       });
 
       this.dispatchControlsUpdated();
@@ -119,7 +119,7 @@ export default class AppModel extends Model {
     this.emitter.emit('removeClusters');
     this.mode = mode;
     this.activeData = this.totalData.filter((datum: ODDatum): boolean => {
-      return this.mode === 'all' || datum.mode === this.mode;
+      return this.mode === 'All' || datum.mode === this.mode;
     });
     this.dispatchControlsUpdated();
     this.processData(this.activeData, this.numFlowLines);
