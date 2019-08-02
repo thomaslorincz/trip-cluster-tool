@@ -70,7 +70,7 @@ export default class ControlPanelView extends View {
 
     this.numFlowLines.innerText = numFlowLines.toString();
 
-    document.querySelectorAll('.content.selected').forEach((content) => {
+    document.querySelectorAll('.content.selected').forEach((content): void => {
       const radioButton = content.querySelector('.content-radio-button');
       radioButton.innerHTML = 'radio_button_unchecked';
       content.classList.remove('selected');
