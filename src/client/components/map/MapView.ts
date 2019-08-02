@@ -1,6 +1,6 @@
 import View from '../../superclasses/View';
 import * as mapboxgl from 'mapbox-gl';
-import * as proj4 from 'proj4';
+import proj4 from 'proj4';
 import * as d3 from 'd3-fetch';
 import FlowLine from '../../lib/FlowLine';
 
