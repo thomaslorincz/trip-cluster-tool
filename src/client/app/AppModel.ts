@@ -1,148 +1,128 @@
 import Model from '../superclasses/Model';
+import * as EventEmitter from 'eventemitter3';
 import * as d3 from 'd3-fetch';
 import FlowLine from '../lib/FlowLine';
+import ODDatum from '../lib/ODDatum';
 
 /** Model that stores and controls the app's data and state. */
 export default class AppModel extends Model {
-  /** @param {EventEmitter} emitter */
-  constructor(emitter) {
+  private selectedLine: string = '';
+  private geography: number = -1;
+  private lineWeight: number = -1;
+  private numFlowLines: number = 15;
+  private boundary: string = 'district';
+  private mode: string = 'all';
+  private readonly maxFlowLines: number = 30;
+  private readonly totalData: ODDatum[] = [];
+  private activeData: ODDatum[] = [];
+  private flowLines: FlowLine[] = [];
+  private flowMatrix = [];
+  private flowMatrixWithClusters = {};
+
+  public constructor(emitter: EventEmitter) {
     super(emitter);
-
-    this.selectedLine = '';
-
-    this.controlPanel = {
-      geography: -1,
-      lineWeight: -1,
-      numFlowLines: 15,
-      boundary: 'district',
-      mode: 'X', // Modes: X for All, A for Auto, T for Transit, V for Active
-    };
-
-    this.maxFlowLines = 30;
-
-    this.totalData = [];
 
     Promise.all([
       d3.csv('assets/data/od_xy.csv'),
-    ]).then(([totalData]) => {
+    ]).then(([totalData]): void => {
       for (let i = 0; i < totalData.length; i++) {
         const totalDatum = totalData[i];
 
-        this.totalData.push({
-          originZone: parseInt(totalDatum['origin_zone']),
-          destZone: parseInt(totalDatum['dest_zone']),
-          originDistrict: parseInt(totalDatum['origin_district']),
-          destDistrict: parseInt(totalDatum['dest_district']),
-          mode: totalDatum['mode_category'],
-          originX: parseFloat(totalDatum['origin_x']),
-          originY: parseFloat(totalDatum['origin_y']),
-          destX: parseFloat(totalDatum['dest_x']),
-          destY: parseFloat(totalDatum['dest_y']),
-          weight: parseInt(totalDatum['count']),
-        });
+        this.totalData.push(new ODDatum(
+            parseInt(totalDatum['origin_zone']),
+            parseInt(totalDatum['dest_zone']),
+            parseInt(totalDatum['origin_district']),
+            parseInt(totalDatum['dest_district']),
+            totalDatum['mode_category'],
+            parseFloat(totalDatum['origin_x']),
+            parseFloat(totalDatum['origin_y']),
+            parseFloat(totalDatum['dest_x']),
+            parseFloat(totalDatum['dest_y']),
+            parseInt(totalDatum['count'])
+        ));
       }
 
-      this.activeData = this.totalData.filter((datum) => {
-        return this.controlPanel.mode === 'X'
-            || datum.mode === this.controlPanel.mode;
+      this.activeData = this.totalData.filter((datum: ODDatum): boolean => {
+        return this.mode === 'all' || datum.mode === this.mode;
       });
 
-      this.emitter.emit('controlsUpdated', this.controlPanel);
+      this.dispatchControlsUpdated();
     });
-
-    /* @type {FlowLine[]} */
-    this.flowLines = [];
-
-    this.flowMatrix = [];
-
-    this.flowMatrixWithClusters = {};
   }
 
-  /**
-   * @param {number} id
-   * @param {'district'|'zone'} type
-   */
-  geographySelected(id, type) {
+  public geographySelected(id: number, type: string): void {
     this.emitter.emit('removeClusters');
     this.selectedLine = '';
-    this.controlPanel.lineWeight = -1;
+    this.lineWeight = -1;
 
-    if (this.controlPanel.boundary === type
-        && this.controlPanel.geography === id) {
-      this.controlPanel.geography = -1;
+    if (this.boundary === type && this.geography === id) {
+      this.geography = -1;
       this.emitter.emit('removeFlowLines');
     } else {
-      this.controlPanel.geography = id;
-      this.processData(this.activeData, this.controlPanel.numFlowLines);
+      this.geography = id;
+      this.processData(this.activeData, this.numFlowLines);
     }
 
-    this.emitter.emit('selectedUpdated', this.controlPanel.geography);
-    this.emitter.emit('controlsUpdated', this.controlPanel);
+    this.emitter.emit('selectedUpdated', this.geography);
+    this.dispatchControlsUpdated();
   }
 
-  /**
-   * @param {string} lineKey
-   * @param {number} lineWeight
-   */
-  lineSelected(lineKey, lineWeight) {
+  public lineSelected(lineKey: string, lineWeight: number): void {
     this.emitter.emit('removeClusters');
     if (this.selectedLine === lineKey) {
       this.selectedLine = '';
-      this.controlPanel.lineWeight = -1;
+      this.lineWeight = -1;
       this.splitIntoGroups();
     } else {
       this.selectedLine = lineKey;
-      this.controlPanel.lineWeight = lineWeight;
+      this.lineWeight = lineWeight;
       this.emitter.emit('addClusters', {
         lineKey,
         clusters: this.flowMatrixWithClusters[lineKey],
       });
     }
 
-    this.emitter.emit('controlsUpdated', this.controlPanel);
+    this.dispatchControlsUpdated();
   }
 
   /** Decreases the number of flow lines by 1 */
-  decrementFlowLines() {
+  public decrementFlowLines(): void {
     this.emitter.emit('removeClusters');
-    if (this.controlPanel.numFlowLines > 1) {
-      this.controlPanel.numFlowLines--;
-      this.processData(this.activeData, this.controlPanel.numFlowLines);
-      this.emitter.emit('controlsUpdated', this.controlPanel);
+    if (this.numFlowLines > 1) {
+      this.numFlowLines--;
+      this.processData(this.activeData, this.numFlowLines);
+      this.dispatchControlsUpdated();
     }
   }
 
   /** Increases the number of flow lines by 1 */
-  incrementFlowLines() {
+  public incrementFlowLines(): void {
     this.emitter.emit('removeClusters');
-    if (this.controlPanel.numFlowLines !== this.maxFlowLines) {
-      this.controlPanel.numFlowLines++;
-      this.processData(this.activeData, this.controlPanel.numFlowLines);
-      this.emitter.emit('controlsUpdated', this.controlPanel);
+    if (this.numFlowLines !== this.maxFlowLines) {
+      this.numFlowLines++;
+      this.processData(this.activeData, this.numFlowLines);
+      this.dispatchControlsUpdated();
     }
   }
 
-  /** @param {string} boundary */
-  updateBoundary(boundary) {
+  public updateBoundary(boundary: string): void {
     this.emitter.emit('removeFlowLines');
     this.emitter.emit('removeClusters');
-    this.controlPanel.geography = -1;
-    this.controlPanel.boundary = boundary;
-    this.emitter.emit('selectedUpdated', this.controlPanel.geography);
-    this.emitter.emit('controlsUpdated', this.controlPanel);
-    this.emitter.emit('boundaryUpdated', this.controlPanel.boundary);
+    this.geography = -1;
+    this.boundary = boundary;
+    this.emitter.emit('selectedUpdated', this.geography);
+    this.dispatchControlsUpdated();
+    this.emitter.emit('boundaryUpdated', this.boundary);
   }
 
-  /** @param {string} mode */
-  updateMode(mode) {
+  public updateMode(mode: string): void {
     this.emitter.emit('removeClusters');
-    this.controlPanel.mode = mode;
-    this.activeData = this.totalData.filter((datum) => {
-      return this.controlPanel.mode === 'X'
-          || datum.mode === this.controlPanel.mode;
+    this.mode = mode;
+    this.activeData = this.totalData.filter((datum: ODDatum): boolean => {
+      return this.mode === 'all' || datum.mode === this.mode;
     });
-    this.emitter.emit('controlsUpdated', this.controlPanel);
-    this.processData(this.activeData, this.controlPanel.numFlowLines);
+    this.dispatchControlsUpdated();
+    this.processData(this.activeData, this.numFlowLines);
   }
 
   /**
@@ -150,20 +130,18 @@ export default class AppModel extends Model {
    * It gives a higher possibility to lines with a higher weight to be chosen as
    * an initial cluster center.
    * @see https://medium.com/@peterkellyonline/weighted-random-selection-3ff222917eb6
-   * @param {[]} dataMatrix
-   * @param {number} numFlowLines
    */
-  processData(dataMatrix, numFlowLines) {
+  private processData(dataMatrix: ODDatum[], numFlowLines: number): void {
     let totalWeight = 0;
     this.flowMatrix = [];
 
-    if (this.controlPanel.boundary === 'district') {
-      this.flowMatrix = dataMatrix.filter((datum) => {
-        return datum.destDistrict === this.controlPanel.geography;
+    if (this.boundary === 'district') {
+      this.flowMatrix = dataMatrix.filter((datum: ODDatum): boolean => {
+        return datum.destDistrict === this.geography;
       });
-    } else if (this.controlPanel.boundary === 'zone') {
-      this.flowMatrix = dataMatrix.filter((datum) => {
-        return datum.destZone === this.controlPanel.geography;
+    } else if (this.boundary === 'zone') {
+      this.flowMatrix = dataMatrix.filter((datum: ODDatum): boolean => {
+        return datum.destZone === this.geography;
       });
     }
 
@@ -195,7 +173,9 @@ export default class AppModel extends Model {
       }
 
       // Delete falsy elements ('', 0, NaN, null, undefined, false)
-      this.flowLines = this.flowLines.filter((e) => e);
+      this.flowLines = this.flowLines.filter((f: FlowLine): boolean => {
+        return Boolean(f);
+      });
     }
 
     if (this.flowMatrix.length > 0) {
@@ -207,7 +187,7 @@ export default class AppModel extends Model {
    * Calculate the distance between each line end and each cluster center. Split
    * lines into a number of cluster groups.
    */
-  splitIntoGroups() {
+  private splitIntoGroups(): void {
     for (let n = 0; n < 50; n++) {
       this.flowMatrixWithClusters = {};
       for (let i = 0; i < this.flowLines.length; i++) {
@@ -216,12 +196,10 @@ export default class AppModel extends Model {
 
       const result = new Array(this.flowMatrix.length);
       for (let i = 0; i < this.flowMatrix.length; i++) {
-        /* @type {FlowLine} */
         const datum = this.flowMatrix[i];
         let group = 0;
         let minDist = Number.POSITIVE_INFINITY;
         for (let j = 0; j < this.flowLines.length; j++) {
-          /* @type {FlowLine} */
           const flowLine = this.flowLines[j];
 
           // Euclidean distance
@@ -254,8 +232,8 @@ export default class AppModel extends Model {
    * @param {{string: FlowLine[]}} flowMatrixWithClusters
    * @return {FlowLine[]}
    */
-  static calcNewFlowLines(flowMatrixWithClusters) {
-    const newFlowLines = [];
+  private static calcNewFlowLines(flowMatrixWithClusters: {}): FlowLine[] {
+    const newFlowLines: FlowLine[] = [];
     for (const [key] of Object.entries(flowMatrixWithClusters)) {
       const flowLines = flowMatrixWithClusters[key];
       let weight = 0;
@@ -264,7 +242,6 @@ export default class AppModel extends Model {
       let originX = 0;
       let originY = 0;
       for (let i = 0; i < flowLines.length; i++) {
-        /* @type {FlowLine} */
         const flowLine = flowLines[i];
         if (flowLine.weight === 0) {
           continue;
@@ -290,7 +267,7 @@ export default class AppModel extends Model {
   }
 
   /** @param {FlowLine[]} flowLines */
-  redrawFlowLines(flowLines) {
+  private redrawFlowLines(flowLines: FlowLine[]): void {
     let minValue = Number.MAX_VALUE;
     let maxValue = 0;
     for (let i = 0; i < flowLines.length; i++) {
@@ -303,6 +280,16 @@ export default class AppModel extends Model {
       lines: flowLines,
       min: minValue,
       max: maxValue,
+    });
+  }
+
+  private dispatchControlsUpdated(): void {
+    this.emitter.emit('controlsUpdated', {
+      geography: this.geography,
+      lineWeight: this.lineWeight,
+      numFlowLines: this.numFlowLines,
+      boundary: this.boundary,
+      mode: this.mode,
     });
   }
 }

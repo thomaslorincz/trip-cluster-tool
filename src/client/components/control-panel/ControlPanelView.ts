@@ -1,52 +1,55 @@
 import View from '../../superclasses/View';
+import * as EventEmitter from 'eventemitter3';
 
 /** A view that represents a panel with process controls and information. */
 export default class ControlPanelView extends View {
-  /**
-   * @param {HTMLElement} container
-   * @param {EventEmitter} emitter
-   */
-  constructor(container, emitter) {
+  private readonly selectedGeography: HTMLElement;
+  private readonly selectedLine: HTMLElement;
+  private readonly flowLinesDecrement: HTMLElement;
+  private readonly numFlowLines: HTMLElement;
+  private readonly flowLinesIncrement: HTMLElement;
+  private readonly boundaryEntries: NodeListOf<HTMLElement>;
+  private readonly modeEntries: NodeListOf<HTMLElement>;
+
+  public constructor(container: Element, emitter: EventEmitter) {
     super(container, emitter);
 
     this.selectedGeography = document.getElementById('selected-geography');
     this.selectedLine = document.getElementById('selected-line');
 
     this.flowLinesDecrement = document.getElementById('flow-lines-decrement');
-    this.flowLinesDecrement.addEventListener('click', () => {
+    this.flowLinesDecrement.addEventListener('click', (): void => {
       this.emitter.emit('decrementClicked');
     });
 
     this.numFlowLines = document.getElementById('flow-lines');
 
     this.flowLinesIncrement = document.getElementById('flow-lines-increment');
-    this.flowLinesIncrement.addEventListener('click', () => {
+    this.flowLinesIncrement.addEventListener('click', (): void => {
       this.emitter.emit('incrementClicked');
     });
 
     this.boundaryEntries = document.querySelectorAll('.boundary-entry');
-    this.boundaryEntries.forEach((entry) => {
-      entry.addEventListener('click', (event) => {
-        this.emitter.emit('boundaryClicked', event.target.dataset.value);
+    this.boundaryEntries.forEach((entry: HTMLElement): void => {
+      entry.addEventListener('click', (event: Event): void => {
+        if (event.target instanceof HTMLElement) {
+          this.emitter.emit('boundaryClicked', event.target.dataset.value);
+        }
       });
     });
 
     this.modeEntries = document.querySelectorAll('.mode-entry');
-    this.modeEntries.forEach((entry) => {
-      entry.addEventListener('click', (event) => {
-        this.emitter.emit('modeClicked', event.target.dataset.value);
+    this.modeEntries.forEach((entry: HTMLElement): void => {
+      entry.addEventListener('click', (event: Event): void => {
+        if (event.target instanceof HTMLElement) {
+          this.emitter.emit('modeClicked', event.target.dataset.value);
+        }
       });
     });
   }
 
-  /**
-   * @param {number} geography
-   * @param {number} lineWeight
-   * @param {number} numFlowLines
-   * @param {string} boundary
-   * @param {string} mode
-   */
-  draw({geography, lineWeight, numFlowLines, boundary, mode}) {
+  public draw(geography: number, lineWeight: number, numFlowLines: number,
+      boundary: string, mode: string): void {
     if (geography === -1) {
       this.selectedGeography.innerText = 'Nothing Selected';
       this.selectedGeography.classList.remove('selected-text');

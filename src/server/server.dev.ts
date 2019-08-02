@@ -1,11 +1,11 @@
-import path from 'path';
-import express from 'express';
-import helmet from 'helmet';
-import webpack from 'webpack';
-import webpackDevMiddleware from 'webpack-dev-middleware';
-import webpackHotMiddleware from 'webpack-hot-middleware';
-import config from '../../webpack.dev.config.js';
-import expressStaticGzip from 'express-static-gzip';
+import * as path from 'path';
+import * as express from 'express';
+import * as helmet from 'helmet';
+import * as webpack from 'webpack';
+import * as webpackDevMiddleware from 'webpack-dev-middleware';
+import * as webpackHotMiddleware from 'webpack-hot-middleware';
+import * as config from '../../webpack.dev.config.js';
+import * as expressStaticGzip from 'express-static-gzip';
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -20,10 +20,10 @@ app.use('/', expressStaticGzip(__dirname, {
   orderPreference: ['br'],
 }));
 
-app.get('/', (req, res, next) => {
+app.get('/', (req, res, next): void => {
   compiler.outputFileSystem.readFile(
       path.join(__dirname, 'index.html'),
-      (err, result) => {
+      (err, result): void => {
         if (err) return next(err);
         res.set('content-type', 'text/html');
         res.send(result);
@@ -32,4 +32,4 @@ app.get('/', (req, res, next) => {
   );
 });
 
-app.listen(port, () => console.log(`Listening on port ${port}`));
+app.listen(port, (): void => console.log(`Listening on port ${port}`));

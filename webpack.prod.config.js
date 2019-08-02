@@ -7,7 +7,7 @@ const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 module.exports = {
   entry: {
-    main: './src/client/index.js',
+    main: './src/client/index.ts',
   },
   output: {
     path: path.join(__dirname, 'dist'),
@@ -31,17 +31,28 @@ module.exports = {
       },
     },
   },
+  resolve: {
+    extensions: ['.ts', '.js']
+  },
   module: {
     rules: [
       {
         enforce: 'pre',
-        test: /\.js$/,
+        test: /\.(ts|js)$/,
         exclude: /node_modules/,
         loader: 'eslint-loader',
         options: {
           emitWarning: true,
           failOnError: true,
           failOnWarning: false,
+        },
+      },
+      {
+        test: /\.ts$/,
+        loader: 'ts-loader',
+        exclude: /node_modules/,
+        options: {
+          configFile: 'tsconfig.prod.json',
         },
       },
       {

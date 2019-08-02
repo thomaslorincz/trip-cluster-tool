@@ -1,11 +1,11 @@
-import express from 'express';
-import helmet from 'helmet';
-import expressStaticGzip from 'express-static-gzip';
+import * as express from 'express';
+import * as helmet from 'helmet';
+import * as expressStaticGzip from 'express-static-gzip';
 
 const app = express();
 const port = process.env.PORT || 8080;
 
-const sslRedirect = (req, res, next) => {
+const sslRedirect = (req, res, next): void => {
   if (req.headers['x-forwarded-proto'] === 'https') {
     return next();
   } else {
@@ -24,4 +24,4 @@ app.use('/', expressStaticGzip(__dirname, {
   orderPreference: ['br'],
 }));
 
-app.listen(port, () => console.log(`Listening on port ${port}`));
+app.listen(port, (): void => console.log(`Listening on port ${port}`));

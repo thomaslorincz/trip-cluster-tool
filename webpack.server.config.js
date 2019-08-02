@@ -3,7 +3,7 @@ const nodeExternals = require('webpack-node-externals');
 
 module.exports = (env, argv) => {
   let serverPath = './src/server/server.';
-  serverPath += (argv.mode === 'production') ? 'prod.js' : 'dev.js';
+  serverPath += (argv.mode === 'production') ? 'prod.ts' : 'dev.ts';
 
   return ({
     entry: {
@@ -21,5 +21,17 @@ module.exports = (env, argv) => {
       __filename: false,
     },
     externals: [nodeExternals()],
+    module: {
+      rules: [
+        {
+          test: /\.ts$/,
+          loader: 'ts-loader',
+          exclude: /node_modules/,
+          options: {
+            configFile: 'tsconfig.prod.json',
+          },
+        },
+      ],
+    },
   });
 };
