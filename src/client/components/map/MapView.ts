@@ -1,15 +1,18 @@
 import View from '../../superclasses/View';
-import mapboxgl from 'mapbox-gl';
-import proj4 from 'proj4';
+import * as mapboxgl from 'mapbox-gl';
+import * as proj4 from 'proj4';
 import * as d3 from 'd3-fetch';
+import FlowLine from '../../lib/FlowLine';
 
 /** A view that represents an interactive map. */
 export default class MapView extends View {
-  /**
-   * @param {HTMLElement} container
-   * @param {EventEmitter} emitter
-   */
-  constructor(container, emitter) {
+  private readonly map: mapboxgl.Map;
+  private districtsDrawn: boolean = true;
+  private zonesDrawn: boolean = false;
+  private linesDrawn: boolean = false;
+  private clustersDrawn: boolean = false;
+
+  public constructor(container, emitter) {
     super(container, emitter);
 
     proj4.defs([
@@ -37,14 +40,8 @@ export default class MapView extends View {
 
     this.map.dragRotate.disable();
 
-    this.districtsDrawn = true;
-    this.zonesDrawn = false;
-
-    this.linesDrawn = false;
-    this.clustersDrawn = false;
-
-    this.map.on('load', () => {
-      d3.image('assets/images/chevron-32x32.png').then((imageData) => {
+    this.map.on('load', (): void => {
+      d3.image('assets/images/chevron-32x32.png').then((imageData): void => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         ctx.drawImage(imageData, 0, 0);
@@ -115,7 +112,7 @@ export default class MapView extends View {
         'filter': ['in', 'TAZ_New', -1],
       });
 
-      this.map.on('click', (event) => {
+      this.map.on('click', (event): void => {
         const districts = this.map.queryRenderedFeatures(
             event.point,
             'districts'
@@ -124,7 +121,7 @@ export default class MapView extends View {
         const lines = this.map.queryRenderedFeatures(event.point, 'lineLayer');
 
         if (this.linesDrawn && lines.length > 0) {
-          const thisLayerFeatures = districts.filter((d) => {
+          const thisLayerFeatures = districts.filter((d): boolean => {
             return d.layer.id === 'lineLayer';
           });
           const feature = thisLayerFeatures[0];
@@ -139,7 +136,7 @@ export default class MapView extends View {
         }
 
         if (this.districtsDrawn && districts.length > 0) {
-          const thisLayerFeatures = districts.filter((d) => {
+          const thisLayerFeatures = districts.filter((d): boolean => {
             return d.layer.id === 'districts';
           });
           const feature = thisLayerFeatures[0];
@@ -150,7 +147,7 @@ export default class MapView extends View {
             );
           }
         } else if (this.zonesDrawn && zones.length > 0) {
-          const thisLayerFeatures = districts.filter((d) => {
+          const thisLayerFeatures = districts.filter((d): boolean => {
             return d.layer.id === 'zones';
           });
           const feature = thisLayerFeatures[0];
@@ -160,19 +157,19 @@ export default class MapView extends View {
         }
       });
 
-      this.map.on('mouseenter', 'districts', () => {
+      this.map.on('mouseenter', 'districts', (): void => {
         this.map.getCanvas().style.cursor = 'pointer';
       });
 
-      this.map.on('mouseleave', 'districts', () => {
+      this.map.on('mouseleave', 'districts', (): void => {
         this.map.getCanvas().style.cursor = '';
       });
 
-      this.map.on('mouseenter', 'zones', () => {
+      this.map.on('mouseenter', 'zones', (): void => {
         this.map.getCanvas().style.cursor = 'pointer';
       });
 
-      this.map.on('mouseleave', 'zones', () => {
+      this.map.on('mouseleave', 'zones', (): void => {
         this.map.getCanvas().style.cursor = '';
       });
 
@@ -180,12 +177,7 @@ export default class MapView extends View {
     });
   }
 
-  /**
-   * @param {FlowLine[]} line
-   * @param {number} min - The minimum magnitude (used for line styling)
-   * @param {number} max - The maximum magnitude (used for line styling)
-   */
-  addFlowLines({lines, min, max}) {
+  public addFlowLines(lines: FlowLine[], min: number, max: number): void {
     const data = {
       'type': 'FeatureCollection',
       'features': [],
@@ -254,7 +246,7 @@ export default class MapView extends View {
   }
 
   /** Removes all drawn lines */
-  removeFlowLines() {
+  public removeFlowLines(): void {
     if (this.linesDrawn) {
       this.map.removeLayer('lineArrows');
       this.map.removeLayer('lineLayer');
@@ -263,11 +255,7 @@ export default class MapView extends View {
     }
   }
 
-  /**
-   * @param {string} lineKey
-   * @param {FlowLine[]} clusters
-   */
-  addClusters({lineKey, clusters}) {
+  public addClusters(lineKey: string, clusters: FlowLine[]): void {
     this.map.setFilter('lineLayer', ['in', 'key', lineKey]);
     this.map.setFilter('lineArrows', ['in', 'key', lineKey]);
 
@@ -353,7 +341,7 @@ export default class MapView extends View {
   }
 
   /** Removes all drawn cluster circles */
-  removeClusters() {
+  public removeClusters(): void {
     if (this.clustersDrawn) {
       this.map.removeLayer('originLayer');
       this.map.removeSource('originLayer');
@@ -365,8 +353,7 @@ export default class MapView extends View {
     }
   }
 
-  /** @param {'district'|'zone'} type */
-  updateBoundary(type) {
+  public updateBoundary(type: string): void {
     if (type === 'district') {
       this.map.setLayoutProperty('districts', 'visibility', 'visible');
       this.map.setLayoutProperty('selectedDistrict', 'visibility', 'visible');
@@ -384,8 +371,7 @@ export default class MapView extends View {
     }
   }
 
-  /** @param {number} id */
-  updateSelected(id) {
+  public updateSelected(id: number): void {
     if (this.districtsDrawn) {
       this.map.setFilter('selectedDistrict', ['in', 'District', id]);
     } else if (this.zonesDrawn) {
