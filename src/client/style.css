@@ -3,8 +3,9 @@ html {
 }
 
 body {
-  display: block;
+  display: flex;
   position: fixed;
+  flex-direction: row;
   width: 100%;
   height: 100%;
   margin: 0;
@@ -13,24 +14,24 @@ body {
 
 #map {
   display: block;
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
-  width: 100%;
+  width: calc(100% - 240px);
   height: 100%;
   z-index: 0;
 }
 
 #control-panel {
   display: block;
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
-  width: 200px;
+  width: 240px;
   height: 100%;
   box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2);
   z-index: 1;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: white;
 }
 
 .control {
@@ -169,8 +170,4 @@ body {
   text-align: start;
   margin-left: 20px;
   margin-top: 4px;
-}
-
-.mapboxgl-ctrl-bottom-left {
-  left: 210px;
 }

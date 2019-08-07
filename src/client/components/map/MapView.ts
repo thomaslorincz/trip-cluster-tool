@@ -35,7 +35,7 @@ export default class MapView extends View {
       container: 'map',
       style: 'mapbox://styles/thomaslorincz/cjx0png073khh1cpap7m6449e',
       center: [-113.323975, 53.631611],
-      zoom: 7,
+      zoom: 8,
     });
 
     this.map.dragRotate.disable();
@@ -62,7 +62,7 @@ export default class MapView extends View {
         'type': 'fill',
         'paint': {
           'fill-color': 'rgba(0,0,0,0)',
-          'fill-outline-color': 'rgba(0,255,255,1)',
+          'fill-outline-color': '#FFFFFF',
         },
       });
 
@@ -77,7 +77,7 @@ export default class MapView extends View {
         'feature_type': 'fill',
         'paint': {
           'line-width': 6,
-          'line-color': 'rgba(255,0,255,1)',
+          'line-color': '#0000FF',
         },
         'filter': ['in', 'District', -1],
       });
@@ -92,7 +92,7 @@ export default class MapView extends View {
         'type': 'fill',
         'paint': {
           'fill-color': 'rgba(0,0,0,0)',
-          'fill-outline-color': 'rgba(0,255,255,1)',
+          'fill-outline-color': '#FFFFFF',
         },
       });
 
@@ -107,7 +107,7 @@ export default class MapView extends View {
         'feature_type': 'fill',
         'paint': {
           'line-width': 6,
-          'line-color': 'rgba(255,0,255,1)',
+          'line-color': '#0000FF',
         },
         'filter': ['in', 'TAZ_New', -1],
       });
