@@ -216,7 +216,7 @@ export default class AppModel extends Model {
    * lines into a number of cluster groups.
    */
   private splitIntoGroups(): void {
-    for (let n = 0; n < 50; n++) {
+    for (let n = 0; n < 100; n++) {
       this.flowMatrixWithClusters = {};
       for (let i = 0; i < this.flowLines.length; i++) {
         this.flowMatrixWithClusters[i] = [];
