@@ -17,7 +17,7 @@ export default class ControlPanelPresenter
       this.model.incrementFlowLines();
     });
 
-    this.emitter.on('boundaryClicked', (boundary: string): void => {
+    this.emitter.on('geographyClicked', (boundary: string): void => {
       this.model.updateBoundary(boundary);
     });
 
