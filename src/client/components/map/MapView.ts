@@ -275,7 +275,7 @@ export default class MapView extends View {
       originData.features.push({
         'type': 'Feature',
         'properties': {
-          'magnitude': Math.max(cluster.weight * 10, 32),
+          'magnitude': Math.max(cluster.weight, 32),
         },
         'geometry': {
           'type': 'Point',
@@ -289,7 +289,7 @@ export default class MapView extends View {
       destData.features.push({
         'type': 'Feature',
         'properties': {
-          'magnitude': Math.max(cluster.weight * 10, 32),
+          'magnitude': Math.max(cluster.weight, 32),
         },
         'geometry': {
           'type': 'Point',
