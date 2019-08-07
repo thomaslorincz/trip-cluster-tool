@@ -21,10 +21,6 @@ export default class AppPresenter extends Presenter<AppModel, View> {
     this.mapView = new MapView(document.getElementById('map'), this.emitter);
     new MapPresenter(this.model, this.mapView, this.emitter);
 
-    this.emitter.on('boundaryUpdated', (boundary: string): void => {
-      this.mapView.updateBoundary(boundary);
-    });
-
     this.emitter.on('removeFlowLines', (): void => {
       this.mapView.removeFlowLines();
     });
@@ -50,6 +46,7 @@ export default class AppPresenter extends Presenter<AppModel, View> {
         ({geographyType, geographyId, geographyWeight, lineId,
           lineWeight}): void => {
           this.mapView.updateSelected(geographyId);
+          this.mapView.updateBoundary(geographyType);
 
           this.selectionView.draw(
               geographyType,

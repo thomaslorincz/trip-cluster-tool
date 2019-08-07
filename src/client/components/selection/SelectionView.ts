@@ -22,16 +22,22 @@ export default class SelectionView extends View {
     if (geographyId === -1) {
       this.selectedGeography.innerText = 'No geography selected';
       this.geographyWeight.classList.add('inactive');
-      this.geographyWeight.innerText = 'District trips: N/A';
+      if (geographyType === 'district') {
+        this.geographyWeight.innerText = 'District trips: N/A';
+      } else {
+        this.geographyWeight.innerText = 'Zone trips: N/A';
+      }
     } else {
       this.geographyWeight.classList.remove('inactive');
-      this.geographyWeight.innerText
-          = `District trips: ${geographyWeight} / 5,136,299`;
 
       if (geographyType === 'district') {
         this.selectedGeography.innerText = `District ${geographyId}`;
+        this.geographyWeight.innerText
+            = `District trips: ${geographyWeight} / 5,136,299`;
       } else {
         this.selectedGeography.innerText = `Zone ${geographyId}`;
+        this.geographyWeight.innerText
+            = `Zone trips: ${geographyWeight} / 5,136,299`;
       }
     }
 

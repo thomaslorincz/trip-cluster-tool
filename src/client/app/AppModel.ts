@@ -62,7 +62,6 @@ export default class AppModel extends Model {
 
   public initialDraw(): void {
     if (this.dataLoaded && this.mapLoaded && !this.initialDrawCompleted) {
-      this.emitter.emit('boundaryUpdated', this.geographyType);
       this.dispatchSelectionUpdated();
       this.dispatchControlsUpdated();
       this.initialDrawCompleted = true;
@@ -81,7 +80,13 @@ export default class AppModel extends Model {
     } else {
       this.geographyId = id;
       this.geographyWeight = this.activeData
-          .filter((datum): boolean => datum.destDistrict === this.geographyId)
+          .filter((datum): boolean => {
+            if (this.geographyType === 'district') {
+              return datum.destDistrict === this.geographyId;
+            } else {
+              return datum.destZone === this.geographyId;
+            }
+          })
           .map((datum): number => datum.weight)
           .reduce((acc, val): number => acc + val);
       this.processData(this.activeData, this.numFlowLines);
@@ -133,9 +138,9 @@ export default class AppModel extends Model {
     this.emitter.emit('removeClusters');
     this.geographyId = -1;
     this.geographyType = boundary;
-    this.emitter.emit('selectedUpdated', this.geographyId);
+    this.lineId = -1;
+    this.dispatchSelectionUpdated();
     this.dispatchControlsUpdated();
-    this.emitter.emit('boundaryUpdated', this.geographyType);
   }
 
   public updateMode(mode: string): void {
