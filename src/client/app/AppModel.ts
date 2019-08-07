@@ -6,11 +6,15 @@ import ODDatum from '../lib/ODDatum';
 
 /** Model that stores and controls the app's data and state. */
 export default class AppModel extends Model {
-  private selectedLine: string = '';
-  private geography: number = -1;
+  private dataLoaded: boolean = false;
+  private mapLoaded: boolean = false;
+  private initialDrawCompleted: boolean = false;
+  private lineId: number = -1;
+  private geographyId: number = -1;
+  private geographyWeight: number = -1;
   private lineWeight: number = -1;
   private numFlowLines: number = 15;
-  private boundary: string = 'district';
+  private geographyType: string = 'district';
   private mode: string = 'All';
   private readonly maxFlowLines: number = 30;
   private readonly totalData: ODDatum[] = [];
@@ -46,35 +50,54 @@ export default class AppModel extends Model {
         return this.mode === 'All' || datum.mode === this.mode;
       });
 
-      this.dispatchControlsUpdated();
+      this.dataLoaded = true;
+      this.initialDraw();
     });
+  }
+
+  public setMapLoaded(loaded: boolean): void {
+    this.mapLoaded = loaded;
+  }
+
+
+  public initialDraw(): void {
+    if (this.dataLoaded && this.mapLoaded && !this.initialDrawCompleted) {
+      this.emitter.emit('boundaryUpdated', this.geographyType);
+      this.dispatchSelectionUpdated();
+      this.dispatchControlsUpdated();
+      this.initialDrawCompleted = true;
+    }
   }
 
   public geographySelected(id: number, type: string): void {
     this.emitter.emit('removeClusters');
-    this.selectedLine = '';
+    this.lineId = -1;
     this.lineWeight = -1;
 
-    if (this.boundary === type && this.geography === id) {
-      this.geography = -1;
+    if (this.geographyType === type && this.geographyId === id) {
+      this.geographyId = -1;
+      this.geographyWeight = -1;
       this.emitter.emit('removeFlowLines');
     } else {
-      this.geography = id;
+      this.geographyId = id;
+      this.geographyWeight = this.activeData
+          .filter((datum): boolean => datum.destDistrict === this.geographyId)
+          .map((datum): number => datum.weight)
+          .reduce((acc, val): number => acc + val);
       this.processData(this.activeData, this.numFlowLines);
     }
 
-    this.emitter.emit('selectedUpdated', this.geography);
-    this.dispatchControlsUpdated();
+    this.dispatchSelectionUpdated();
   }
 
   public lineSelected(lineKey: string, lineWeight: number): void {
     this.emitter.emit('removeClusters');
-    if (this.selectedLine === lineKey) {
-      this.selectedLine = '';
+    if (this.lineId === parseInt(lineKey)) {
+      this.lineId = -1;
       this.lineWeight = -1;
       this.splitIntoGroups();
     } else {
-      this.selectedLine = lineKey;
+      this.lineId = parseInt(lineKey);
       this.lineWeight = lineWeight;
       this.emitter.emit('addClusters', {
         lineKey,
@@ -82,7 +105,7 @@ export default class AppModel extends Model {
       });
     }
 
-    this.dispatchControlsUpdated();
+    this.dispatchSelectionUpdated();
   }
 
   /** Decreases the number of flow lines by 1 */
@@ -108,11 +131,11 @@ export default class AppModel extends Model {
   public updateBoundary(boundary: string): void {
     this.emitter.emit('removeFlowLines');
     this.emitter.emit('removeClusters');
-    this.geography = -1;
-    this.boundary = boundary;
-    this.emitter.emit('selectedUpdated', this.geography);
+    this.geographyId = -1;
+    this.geographyType = boundary;
+    this.emitter.emit('selectedUpdated', this.geographyId);
     this.dispatchControlsUpdated();
-    this.emitter.emit('boundaryUpdated', this.boundary);
+    this.emitter.emit('boundaryUpdated', this.geographyType);
   }
 
   public updateMode(mode: string): void {
@@ -135,13 +158,13 @@ export default class AppModel extends Model {
     let totalWeight = 0;
     this.flowMatrix = [];
 
-    if (this.boundary === 'district') {
+    if (this.geographyType === 'district') {
       this.flowMatrix = dataMatrix.filter((datum: ODDatum): boolean => {
-        return datum.destDistrict === this.geography;
+        return datum.destDistrict === this.geographyId;
       });
-    } else if (this.boundary === 'zone') {
+    } else if (this.geographyType === 'zone') {
       this.flowMatrix = dataMatrix.filter((datum: ODDatum): boolean => {
-        return datum.destZone === this.geography;
+        return datum.destZone === this.geographyId;
       });
     }
 
@@ -283,12 +306,20 @@ export default class AppModel extends Model {
     });
   }
 
+  private dispatchSelectionUpdated(): void {
+    this.emitter.emit('selectionUpdated', {
+      geographyType: this.geographyType,
+      geographyId: this.geographyId,
+      geographyWeight: this.geographyWeight,
+      lineId: this.lineId,
+      lineWeight: this.lineWeight,
+    });
+  }
+
   private dispatchControlsUpdated(): void {
     this.emitter.emit('controlsUpdated', {
-      geography: this.geography,
-      lineWeight: this.lineWeight,
       numFlowLines: this.numFlowLines,
-      boundary: this.boundary,
+      geographyType: this.geographyType,
       mode: this.mode,
     });
   }

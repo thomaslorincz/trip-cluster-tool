@@ -7,9 +7,12 @@ import MapPresenter from '../components/map/MapPresenter';
 import ControlPanelView from '../components/control-panel/ControlPanelView';
 import ControlPanelPresenter
   from '../components/control-panel/ControlPanelPresenter';
+import SelectionView from '../components/selection/SelectionView';
+import SelectionPresenter from '../components/selection/SelectionPresenter';
 
 export default class AppPresenter extends Presenter<AppModel, View> {
   private readonly mapView: MapView;
+  private readonly selectionView: SelectionView;
   private readonly controlPanelView: ControlPanelView;
 
   public constructor(model: AppModel, view: View, emitter: EventEmitter) {
@@ -17,10 +20,6 @@ export default class AppPresenter extends Presenter<AppModel, View> {
 
     this.mapView = new MapView(document.getElementById('map'), this.emitter);
     new MapPresenter(this.model, this.mapView, this.emitter);
-
-    this.emitter.on('selectedUpdated', (selected: number): void => {
-      this.mapView.updateSelected(selected);
-    });
 
     this.emitter.on('boundaryUpdated', (boundary: string): void => {
       this.mapView.updateBoundary(boundary);
@@ -40,6 +39,28 @@ export default class AppPresenter extends Presenter<AppModel, View> {
       this.mapView.addClusters(lineKey, clusters);
     });
 
+    this.selectionView = new SelectionView(
+        document.getElementById('selection-panel'),
+        this.emitter
+    );
+    new SelectionPresenter(this.model, this.selectionView, this.emitter);
+
+    this.emitter.on(
+        'selectionUpdated',
+        ({geographyType, geographyId, geographyWeight, lineId,
+          lineWeight}): void => {
+          this.mapView.updateSelected(geographyId);
+
+          this.selectionView.draw(
+              geographyType,
+              geographyId,
+              geographyWeight,
+              lineId,
+              lineWeight
+          );
+        }
+    );
+
     this.controlPanelView = new ControlPanelView(
         document.getElementById('control-panel'),
         this.emitter
@@ -48,10 +69,8 @@ export default class AppPresenter extends Presenter<AppModel, View> {
 
     this.emitter.on(
         'controlsUpdated',
-        ({geography, lineWeight, numFlowLines, boundary, mode}): void => {
-          this.controlPanelView.draw(
-              geography, lineWeight, numFlowLines, boundary, mode
-          );
+        ({numFlowLines, geographyType, mode}): void => {
+          this.controlPanelView.draw(numFlowLines, geographyType, mode);
         }
     );
   }
