@@ -173,7 +173,7 @@ export default class MapView extends View {
         this.map.getCanvas().style.cursor = '';
       });
 
-      this.updateBoundary('district');
+      this.emitter.emit('initialDraw');
     });
   }
 
