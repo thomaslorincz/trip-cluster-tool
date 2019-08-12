@@ -44,7 +44,7 @@ export default class AppPresenter extends Presenter<AppModel, View> {
     this.emitter.on(
         'selectionUpdated',
         ({geographyType, geographyId, geographyWeight, lineId,
-          lineWeight}): void => {
+          lineWeight, mode}): void => {
           this.mapView.updateSelected(geographyId);
           this.mapView.updateBoundary(geographyType);
 
@@ -53,7 +53,8 @@ export default class AppPresenter extends Presenter<AppModel, View> {
               geographyId,
               geographyWeight,
               lineId,
-              lineWeight
+              lineWeight,
+              mode
           );
         }
     );
