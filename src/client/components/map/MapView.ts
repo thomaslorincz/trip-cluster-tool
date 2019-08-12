@@ -39,6 +39,7 @@ export default class MapView extends View {
     });
 
     this.map.dragRotate.disable();
+    this.map.doubleClickZoom.disable();
 
     this.map.on('load', (): void => {
       d3.image('assets/images/chevron-32x32.png').then((imageData): void => {
