@@ -3,7 +3,7 @@ import * as mapboxgl from 'mapbox-gl';
 import proj4 from 'proj4';
 import * as d3 from 'd3-fetch';
 import FlowLine from '../../lib/FlowLine';
-import ODDatum from '../../lib/ODDatum';
+import Point from '../../lib/Point';
 
 /** A view that represents an interactive map. */
 export default class MapView extends View {
@@ -257,7 +257,8 @@ export default class MapView extends View {
     }
   }
 
-  public addClusters(lineKey: string, clusters: ODDatum[], mode: string): void {
+  public addClusters(lineKey: string, origins: Point[],
+      destinations: Point[]): void {
     this.map.setFilter('lineLayer', ['in', 'key', lineKey]);
     this.map.setFilter('lineArrows', ['in', 'key', lineKey]);
 
@@ -271,62 +272,39 @@ export default class MapView extends View {
       'features': [],
     };
 
-    for (let i = 0; i < clusters.length; i++) {
-      const cluster = clusters[i];
-
-      let weight = 0;
-      if (mode === 'all') {
-        weight = cluster.auto + cluster.transit + cluster.active;
-      } else {
-        weight = cluster[mode];
-      }
-
+    for (let i = 0; i < origins.length; i++) {
+      const origin = origins[i];
       originData.features.push({
         'type': 'Feature',
         'properties': {
-          'magnitude': Math.min(Math.max(weight, 32), 320),
+          'magnitude': Math.min(Math.max(origin.weight, 32), 200),
         },
         'geometry': {
           'type': 'Point',
           'coordinates': proj4(
               'EPSG:3776', 'EPSG:4326',
-              [cluster.originX, cluster.originY],
-          ),
-        },
-      });
-
-      destData.features.push({
-        'type': 'Feature',
-        'properties': {
-          'magnitude': Math.min(Math.max(weight, 32), 320),
-        },
-        'geometry': {
-          'type': 'Point',
-          'coordinates': proj4(
-              'EPSG:3776', 'EPSG:4326',
-              [cluster.destX, cluster.destY],
+              [origin.x, origin.y],
           ),
         },
       });
     }
 
-    this.map.addLayer({
-      'id': 'originLayer',
-      'type': 'circle',
-      'source': {
-        'type': 'geojson',
-        'data': originData,
-      },
-      'paint': {
-        'circle-color': '#FFFF00',
-        'circle-radius': [
-          'interpolate', ['exponential', 2], ['zoom'],
-          0, ['*', ['get', 'magnitude'], ['^', 2, -16]],
-          24, ['*', ['get', 'magnitude'], ['^', 2, 8]],
-        ],
-        'circle-opacity': 0.8,
-      },
-    });
+    for (let i = 0; i < destinations.length; i++) {
+      const destination = destinations[i];
+      destData.features.push({
+        'type': 'Feature',
+        'properties': {
+          'magnitude': Math.min(Math.max(destination.weight, 32), 200),
+        },
+        'geometry': {
+          'type': 'Point',
+          'coordinates': proj4(
+              'EPSG:3776', 'EPSG:4326',
+              [destination.x, destination.y],
+          ),
+        },
+      });
+    }
 
     this.map.addLayer({
       'id': 'destLayer',
@@ -342,7 +320,25 @@ export default class MapView extends View {
           0, ['*', ['get', 'magnitude'], ['^', 2, -16]],
           24, ['*', ['get', 'magnitude'], ['^', 2, 8]],
         ],
-        'circle-opacity': 0.8,
+        'circle-opacity': 0.6,
+      },
+    });
+
+    this.map.addLayer({
+      'id': 'originLayer',
+      'type': 'circle',
+      'source': {
+        'type': 'geojson',
+        'data': originData,
+      },
+      'paint': {
+        'circle-color': '#FFFF00',
+        'circle-radius': [
+          'interpolate', ['exponential', 2], ['zoom'],
+          0, ['*', ['get', 'magnitude'], ['^', 2, -16]],
+          24, ['*', ['get', 'magnitude'], ['^', 2, 8]],
+        ],
+        'circle-opacity': 0.6,
       },
     });
 
