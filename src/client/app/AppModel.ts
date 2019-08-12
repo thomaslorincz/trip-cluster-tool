@@ -15,13 +15,12 @@ export default class AppModel extends Model {
   private lineWeight: number = -1;
   private numFlowLines: number = 15;
   private geographyType: string = 'district';
-  private mode: string = 'All';
+  private mode: string = 'all';
   private readonly maxFlowLines: number = 30;
   private readonly totalData: ODDatum[] = [];
-  private activeData: ODDatum[] = [];
+  private selectedData: ODDatum[] = [];
   private flowLines: FlowLine[] = [];
-  private flowMatrix = [];
-  private flowMatrixWithClusters = {};
+  private flowLineToData: Map<string, ODDatum[]> = new Map<string, ODDatum[]>();
 
   public constructor(emitter: EventEmitter) {
     super(emitter);
@@ -30,25 +29,20 @@ export default class AppModel extends Model {
       d3.csv('assets/data/od_xy.csv'),
     ]).then(([totalData]): void => {
       for (let i = 0; i < totalData.length; i++) {
-        const totalDatum = totalData[i];
-
         this.totalData.push(new ODDatum(
-            parseInt(totalDatum['origin_zone']),
-            parseInt(totalDatum['dest_zone']),
-            parseInt(totalDatum['origin_district']),
-            parseInt(totalDatum['dest_district']),
-            totalDatum['mode_category'],
-            parseFloat(totalDatum['origin_x']),
-            parseFloat(totalDatum['origin_y']),
-            parseFloat(totalDatum['dest_x']),
-            parseFloat(totalDatum['dest_y']),
-            parseInt(totalDatum['count'])
+            parseInt(totalData[i]['origin_zone']),
+            parseInt(totalData[i]['dest_zone']),
+            parseInt(totalData[i]['origin_district']),
+            parseInt(totalData[i]['dest_district']),
+            parseFloat(totalData[i]['origin_x']),
+            parseFloat(totalData[i]['origin_y']),
+            parseFloat(totalData[i]['dest_x']),
+            parseFloat(totalData[i]['dest_y']),
+            parseInt(totalData[i]['auto']),
+            parseInt(totalData[i]['transit']),
+            parseInt(totalData[i]['active']),
         ));
       }
-
-      this.activeData = this.totalData.filter((datum: ODDatum): boolean => {
-        return this.mode === 'All' || datum.mode === this.mode;
-      });
 
       this.dataLoaded = true;
       this.initialDraw();
@@ -79,7 +73,7 @@ export default class AppModel extends Model {
       this.emitter.emit('removeFlowLines');
     } else {
       this.geographyId = id;
-      this.geographyWeight = this.activeData
+      this.geographyWeight = this.totalData
           .filter((datum): boolean => {
             if (this.geographyType === 'district') {
               return datum.destDistrict === this.geographyId;
@@ -87,9 +81,15 @@ export default class AppModel extends Model {
               return datum.destZone === this.geographyId;
             }
           })
-          .map((datum): number => datum.weight)
+          .map((datum): number => {
+            if (this.mode === 'all') {
+              return datum.auto + datum.transit + datum.active;
+            } else {
+              return datum[this.mode];
+            }
+          })
           .reduce((acc, val): number => acc + val);
-      this.processData(this.activeData, this.numFlowLines);
+      this.processData();
     }
 
     this.dispatchSelectionUpdated();
@@ -106,7 +106,7 @@ export default class AppModel extends Model {
       this.lineWeight = lineWeight;
       this.emitter.emit('addClusters', {
         lineKey,
-        clusters: this.flowMatrixWithClusters[lineKey],
+        clusters: this.flowLineToData[lineKey],
       });
     }
 
@@ -118,7 +118,7 @@ export default class AppModel extends Model {
     this.emitter.emit('removeClusters');
     if (this.numFlowLines > 1) {
       this.numFlowLines--;
-      this.processData(this.activeData, this.numFlowLines);
+      this.processData();
       this.dispatchControlsUpdated();
     }
   }
@@ -128,7 +128,7 @@ export default class AppModel extends Model {
     this.emitter.emit('removeClusters');
     if (this.numFlowLines !== this.maxFlowLines) {
       this.numFlowLines++;
-      this.processData(this.activeData, this.numFlowLines);
+      this.processData();
       this.dispatchControlsUpdated();
     }
   }
@@ -146,69 +146,60 @@ export default class AppModel extends Model {
   public updateMode(mode: string): void {
     this.emitter.emit('removeClusters');
     this.mode = mode;
-    this.activeData = this.totalData.filter((datum: ODDatum): boolean => {
-      return this.mode === 'All' || datum.mode === this.mode;
-    });
     this.dispatchControlsUpdated();
-    this.processData(this.activeData, this.numFlowLines);
+    this.processData();
   }
 
   /**
    * K-means initialization. This is different from traditional K-means.
-   * It gives a higher possibility to lines with a higher weight to be chosen as
-   * an initial cluster center.
-   * @see https://medium.com/@peterkellyonline/weighted-random-selection-3ff222917eb6
+   * Lines with a higher weight are given priority to be initial cluster
+   * centers.
    */
-  private processData(dataMatrix: ODDatum[], numFlowLines: number): void {
-    let totalWeight = 0;
-    this.flowMatrix = [];
-
+  private processData(): void {
+    this.selectedData = [];
     if (this.geographyType === 'district') {
-      this.flowMatrix = dataMatrix.filter((datum: ODDatum): boolean => {
+      this.selectedData = this.totalData.filter((datum: ODDatum): boolean => {
         return datum.destDistrict === this.geographyId;
       });
     } else if (this.geographyType === 'zone') {
-      this.flowMatrix = dataMatrix.filter((datum: ODDatum): boolean => {
+      this.selectedData = this.totalData.filter((datum: ODDatum): boolean => {
         return datum.destZone === this.geographyId;
       });
     }
 
-    for (let i = 0; i < this.flowMatrix.length; i++) {
-      totalWeight += this.flowMatrix[i].weight;
-    }
-
-    let currentSum = 0;
-    const transitArraySums = new Array(this.flowMatrix.length);
-    for (let i = 0; i < this.flowMatrix.length; i++) {
-      currentSum += this.flowMatrix[i].weight;
-      transitArraySums[i] = currentSum;
-    }
+    this.selectedData.sort((first, second): number => {
+      if (this.mode === 'all') {
+        const firstSum = first.auto + first.transit + first.active;
+        const secondSum = second.auto + second.transit + second.active;
+        return secondSum - firstSum;
+      } else {
+        return second[this.mode] - first[this.mode];
+      }
+    });
 
     this.flowLines = [];
-    if (this.flowMatrix.length < numFlowLines) {
-      this.flowLines = [...this.flowMatrix];
-    } else {
-      this.flowLines = new Array(numFlowLines);
-      for (let i = 0; i < this.flowLines.length; i++) {
-        const randomWeight = Math.floor(Math.random() * totalWeight);
-        for (let j = 0; j < this.flowMatrix.length; j++) {
-          if (transitArraySums[j] >= randomWeight
-              && this.flowLines.indexOf(this.flowMatrix[j]) === -1) {
-            this.flowLines[i] = this.flowMatrix[j];
-            break;
-          }
+    for (let i = 0; i < this.numFlowLines; i++) {
+      const datum = this.selectedData[i];
+      if (datum) {
+        let weight = 0;
+        if (this.mode === 'all') {
+          weight = datum.auto + datum.transit + datum.active;
+        } else {
+          weight = datum[this.mode];
         }
+
+        this.flowLines.push(new FlowLine(
+            i.toString(),
+            datum.originX,
+            datum.originY,
+            datum.destX,
+            datum.destY,
+            weight
+        ));
       }
-
-      // Delete falsy elements ('', 0, NaN, null, undefined, false)
-      this.flowLines = this.flowLines.filter((f: FlowLine): boolean => {
-        return Boolean(f);
-      });
     }
 
-    if (this.flowMatrix.length > 0) {
-      this.splitIntoGroups();
-    }
+    this.splitIntoGroups();
   }
 
   /**
@@ -216,73 +207,78 @@ export default class AppModel extends Model {
    * lines into a number of cluster groups.
    */
   private splitIntoGroups(): void {
-    for (let n = 0; n < 100; n++) {
-      this.flowMatrixWithClusters = {};
-      for (let i = 0; i < this.flowLines.length; i++) {
-        this.flowMatrixWithClusters[i] = [];
-      }
+    this.flowLineToData = new Map<string, ODDatum[]>();
+    for (let i = 0; i < this.flowLines.length; i++) {
+      this.flowLineToData.set(this.flowLines[i].key, []);
+    }
 
-      const result = new Array(this.flowMatrix.length);
-      for (let i = 0; i < this.flowMatrix.length; i++) {
-        const datum = this.flowMatrix[i];
-        let group = 0;
+    // 50 k-means iterations
+    for (let n = 0; n < 50; n++) {
+      const datumToClosestFlowLine = {};
+      for (let i = 0; i < this.selectedData.length; i++) {
+        const datum = this.selectedData[i];
+        let closestFlowLine = null;
         let minDist = Number.POSITIVE_INFINITY;
         for (let j = 0; j < this.flowLines.length; j++) {
           const flowLine = this.flowLines[j];
 
           // Euclidean distance
-          const currentDist = Math.sqrt(
+          const dist = Math.sqrt(
               Math.pow(datum.originX - flowLine.originX, 2)
               + Math.pow(datum.originY - flowLine.originY, 2)
               + Math.pow(datum.destX - flowLine.destX, 2)
               + Math.pow(datum.destY - flowLine.destY, 2)
           );
 
-          if (currentDist < minDist) {
-            group = j;
-            minDist = currentDist;
+          if (dist < minDist) {
+            closestFlowLine = flowLine.key;
+            minDist = dist;
           }
         }
 
-        result[i] = group;
+        datumToClosestFlowLine[i] = closestFlowLine;
       }
 
-      for (let i = 0; i < this.flowMatrix.length; i++) {
-        this.flowMatrixWithClusters[result[i]].push(this.flowMatrix[i]);
+      for (let i = 0; i < this.selectedData.length; i++) {
+        this.flowLineToData.get(datumToClosestFlowLine[i])
+            .push(this.selectedData[i]);
       }
-      this.flowLines = AppModel.calcNewFlowLines(this.flowMatrixWithClusters);
+      this.flowLines = this.calcNewFlowLines();
     }
 
     this.redrawFlowLines(this.flowLines);
   }
 
-  /**
-   * @param {{string: FlowLine[]}} flowMatrixWithClusters
-   * @return {FlowLine[]}
-   */
-  private static calcNewFlowLines(flowMatrixWithClusters: {}): FlowLine[] {
+  private calcNewFlowLines(): FlowLine[] {
     const newFlowLines: FlowLine[] = [];
-    for (const [key] of Object.entries(flowMatrixWithClusters)) {
-      const flowLines = flowMatrixWithClusters[key];
+    this.flowLineToData.forEach((cluster, key): void => {
       let weight = 0;
       let destX = 0;
       let destY = 0;
       let originX = 0;
       let originY = 0;
-      for (let i = 0; i < flowLines.length; i++) {
-        const flowLine = flowLines[i];
-        if (flowLine.weight === 0) {
+      for (let i = 0; i < cluster.length; i++) {
+        const datum = cluster[i];
+
+        let datumWeight = 0;
+        if (this.mode === 'all') {
+          datumWeight = datum.auto + datum.transit + datum.active;
+        } else {
+          datumWeight = datum[this.mode];
+        }
+
+        if (datumWeight === 0) {
           continue;
         }
 
-        const newWeight = weight + flowLine.weight;
-        originX = (originX * weight + flowLine.originX * flowLine.weight)
+        const newWeight = weight + datumWeight;
+        originX = (originX * weight + datum.originX * datumWeight)
             / newWeight;
-        originY = (originY * weight + flowLine.originY * flowLine.weight)
+        originY = (originY * weight + datum.originY * datumWeight)
             / newWeight;
-        destX = (destX * weight + flowLine.destX * flowLine.weight)
+        destX = (destX * weight + datum.destX * datumWeight)
             / newWeight;
-        destY = (destY * weight + flowLine.destY * flowLine.weight)
+        destY = (destY * weight + datum.destY * datumWeight)
             / newWeight;
         weight = newWeight;
       }
@@ -290,11 +286,11 @@ export default class AppModel extends Model {
       newFlowLines.push(
           new FlowLine(key, originX, originY, destX, destY, weight)
       );
-    }
+    });
+
     return newFlowLines;
   }
 
-  /** @param {FlowLine[]} flowLines */
   private redrawFlowLines(flowLines: FlowLine[]): void {
     let minValue = Number.MAX_VALUE;
     let maxValue = 0;
