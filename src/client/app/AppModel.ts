@@ -73,22 +73,7 @@ export default class AppModel extends Model {
       this.emitter.emit('removeFlowLines');
     } else {
       this.geographyId = id;
-      this.geographyWeight = this.totalData
-          .filter((datum): boolean => {
-            if (this.geographyType === 'district') {
-              return datum.destDistrict === this.geographyId;
-            } else {
-              return datum.destZone === this.geographyId;
-            }
-          })
-          .map((datum): number => {
-            if (this.mode === 'all') {
-              return datum.auto + datum.transit + datum.active;
-            } else {
-              return datum[this.mode];
-            }
-          })
-          .reduce((acc, val): number => acc + val);
+      this.updateGeographyWeight();
       this.processData();
     }
 
@@ -148,22 +133,7 @@ export default class AppModel extends Model {
     this.emitter.emit('removeClusters');
     this.mode = mode;
     this.processData();
-    this.geographyWeight = this.totalData
-        .filter((datum): boolean => {
-          if (this.geographyType === 'district') {
-            return datum.destDistrict === this.geographyId;
-          } else {
-            return datum.destZone === this.geographyId;
-          }
-        })
-        .map((datum): number => {
-          if (this.mode === 'all') {
-            return datum.auto + datum.transit + datum.active;
-          } else {
-            return datum[this.mode];
-          }
-        })
-        .reduce((acc, val): number => acc + val);
+    this.updateGeographyWeight();
     this.dispatchSelectionUpdated();
     this.dispatchControlsUpdated();
   }
@@ -318,6 +288,25 @@ export default class AppModel extends Model {
       min: minValue,
       max: maxValue,
     });
+  }
+
+  private updateGeographyWeight(): void {
+    this.geographyWeight = this.totalData
+        .filter((datum): boolean => {
+          if (this.geographyType === 'district') {
+            return datum.destDistrict === this.geographyId;
+          } else {
+            return datum.destZone === this.geographyId;
+          }
+        })
+        .map((datum): number => {
+          if (this.mode === 'all') {
+            return datum.auto + datum.transit + datum.active;
+          } else {
+            return datum[this.mode];
+          }
+        })
+        .reduce((acc, val): number => acc + val);
   }
 
   private dispatchSelectionUpdated(): void {
