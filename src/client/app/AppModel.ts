@@ -2,7 +2,8 @@ import Model from '../superclasses/Model';
 import * as EventEmitter from 'eventemitter3';
 import * as d3 from 'd3-fetch';
 import FlowLine from '../lib/FlowLine';
-import ODDatum from '../lib/ODDatum';
+import ODPair from '../lib/ODPair';
+import Point from '../lib/Point';
 
 /** Model that stores and controls the app's data and state. */
 export default class AppModel extends Model {
@@ -17,10 +18,10 @@ export default class AppModel extends Model {
   private geographyType: string = 'district';
   private mode: string = 'all';
   private readonly maxFlowLines: number = 30;
-  private readonly totalData: ODDatum[] = [];
-  private selectedData: ODDatum[] = [];
+  private readonly totalData: ODPair[] = [];
+  private selectedData: ODPair[] = [];
   private flowLines: FlowLine[] = [];
-  private flowLineToData: Map<string, ODDatum[]> = new Map<string, ODDatum[]>();
+  private flowLineToData: Map<string, ODPair[]> = new Map<string, ODPair[]>();
 
   public constructor(emitter: EventEmitter) {
     super(emitter);
@@ -29,18 +30,28 @@ export default class AppModel extends Model {
       d3.csv('assets/data/od_xy.csv'),
     ]).then(([totalData]): void => {
       for (let i = 0; i < totalData.length; i++) {
-        this.totalData.push(new ODDatum(
-            parseInt(totalData[i]['origin_zone']),
-            parseInt(totalData[i]['dest_zone']),
-            parseInt(totalData[i]['origin_district']),
-            parseInt(totalData[i]['dest_district']),
-            parseFloat(totalData[i]['origin_x']),
-            parseFloat(totalData[i]['origin_y']),
-            parseFloat(totalData[i]['dest_x']),
-            parseFloat(totalData[i]['dest_y']),
+        this.totalData.push(new ODPair(
+            new Point(
+                parseInt(totalData[i]['origin_zone']),
+                parseInt(totalData[i]['origin_district']),
+                parseFloat(totalData[i]['origin_x']),
+                parseFloat(totalData[i]['origin_y']),
+                parseInt(totalData[i]['auto'])
+                + parseInt(totalData[i]['transit'])
+                + parseInt(totalData[i]['active'])
+            ),
+            new Point(
+                parseInt(totalData[i]['dest_zone']),
+                parseInt(totalData[i]['dest_district']),
+                parseFloat(totalData[i]['dest_x']),
+                parseFloat(totalData[i]['dest_y']),
+                parseInt(totalData[i]['auto'])
+                + parseInt(totalData[i]['transit'])
+                + parseInt(totalData[i]['active'])
+            ),
             parseInt(totalData[i]['auto']),
             parseInt(totalData[i]['transit']),
-            parseInt(totalData[i]['active']),
+            parseInt(totalData[i]['active'])
         ));
       }
 
@@ -73,22 +84,7 @@ export default class AppModel extends Model {
       this.emitter.emit('removeFlowLines');
     } else {
       this.geographyId = id;
-      this.geographyWeight = this.totalData
-          .filter((datum): boolean => {
-            if (this.geographyType === 'district') {
-              return datum.destDistrict === this.geographyId;
-            } else {
-              return datum.destZone === this.geographyId;
-            }
-          })
-          .map((datum): number => {
-            if (this.mode === 'all') {
-              return datum.auto + datum.transit + datum.active;
-            } else {
-              return datum[this.mode];
-            }
-          })
-          .reduce((acc, val): number => acc + val);
+      this.updateGeographyWeight();
       this.processData();
     }
 
@@ -104,10 +100,12 @@ export default class AppModel extends Model {
     } else {
       this.lineId = parseInt(lineKey);
       this.lineWeight = lineWeight;
+      const [origins, destinations]
+          = this.combineClusterPoints(this.flowLineToData.get(lineKey));
       this.emitter.emit('addClusters', {
         lineKey,
-        clusters: this.flowLineToData.get(lineKey),
-        mode: this.mode,
+        origins,
+        destinations,
       });
     }
 
@@ -148,22 +146,7 @@ export default class AppModel extends Model {
     this.emitter.emit('removeClusters');
     this.mode = mode;
     this.processData();
-    this.geographyWeight = this.totalData
-        .filter((datum): boolean => {
-          if (this.geographyType === 'district') {
-            return datum.destDistrict === this.geographyId;
-          } else {
-            return datum.destZone === this.geographyId;
-          }
-        })
-        .map((datum): number => {
-          if (this.mode === 'all') {
-            return datum.auto + datum.transit + datum.active;
-          } else {
-            return datum[this.mode];
-          }
-        })
-        .reduce((acc, val): number => acc + val);
+    this.updateGeographyWeight();
     this.dispatchSelectionUpdated();
     this.dispatchControlsUpdated();
   }
@@ -176,43 +159,30 @@ export default class AppModel extends Model {
   private processData(): void {
     this.selectedData = [];
     if (this.geographyType === 'district') {
-      this.selectedData = this.totalData.filter((datum: ODDatum): boolean => {
-        return datum.destDistrict === this.geographyId;
+      this.selectedData = this.totalData.filter((pair: ODPair): boolean => {
+        return pair.destination.district === this.geographyId;
       });
     } else if (this.geographyType === 'zone') {
-      this.selectedData = this.totalData.filter((datum: ODDatum): boolean => {
-        return datum.destZone === this.geographyId;
+      this.selectedData = this.totalData.filter((pair: ODPair): boolean => {
+        return pair.destination.zone === this.geographyId;
       });
     }
 
     this.selectedData.sort((first, second): number => {
-      if (this.mode === 'all') {
-        const firstSum = first.auto + first.transit + first.active;
-        const secondSum = second.auto + second.transit + second.active;
-        return secondSum - firstSum;
-      } else {
-        return second[this.mode] - first[this.mode];
-      }
+      return second[this.mode] - first[this.mode];
     });
 
     this.flowLines = [];
     for (let i = 0; i < this.numFlowLines; i++) {
       const datum = this.selectedData[i];
       if (datum) {
-        let weight = 0;
-        if (this.mode === 'all') {
-          weight = datum.auto + datum.transit + datum.active;
-        } else {
-          weight = datum[this.mode];
-        }
-
         this.flowLines.push(new FlowLine(
             i.toString(),
-            datum.originX,
-            datum.originY,
-            datum.destX,
-            datum.destY,
-            weight
+            datum.origin.x,
+            datum.origin.y,
+            datum.destination.x,
+            datum.destination.y,
+            datum[this.mode]
         ));
       }
     }
@@ -225,7 +195,7 @@ export default class AppModel extends Model {
    * lines into a number of cluster groups.
    */
   private splitIntoGroups(): void {
-    this.flowLineToData = new Map<string, ODDatum[]>();
+    this.flowLineToData = new Map<string, ODPair[]>();
     for (let i = 0; i < this.flowLines.length; i++) {
       this.flowLineToData.set(this.flowLines[i].key, []);
     }
@@ -234,7 +204,7 @@ export default class AppModel extends Model {
     const datumToClosestFlowLine = {};
     for (let n = 0; n < 100; n++) {
       for (let i = 0; i < this.selectedData.length; i++) {
-        const datum = this.selectedData[i];
+        const pair = this.selectedData[i];
         let closestFlowLine = null;
         let minDist = Number.POSITIVE_INFINITY;
         for (let j = 0; j < this.flowLines.length; j++) {
@@ -242,10 +212,10 @@ export default class AppModel extends Model {
 
           // Euclidean distance
           const dist = Math.sqrt(
-              Math.pow(datum.originX - flowLine.originX, 2)
-              + Math.pow(datum.originY - flowLine.originY, 2)
-              + Math.pow(datum.destX - flowLine.destX, 2)
-              + Math.pow(datum.destY - flowLine.destY, 2)
+              Math.pow(pair.origin.x - flowLine.originX, 2)
+              + Math.pow(pair.origin.y - flowLine.originY, 2)
+              + Math.pow(pair.destination.x - flowLine.destX, 2)
+              + Math.pow(pair.destination.y - flowLine.destY, 2)
           );
 
           if (dist < minDist) {
@@ -275,23 +245,17 @@ export default class AppModel extends Model {
       let originX = 0;
       let originY = 0;
       for (let i = 0; i < cluster.length; i++) {
-        const datum = cluster[i];
+        const pair = cluster[i];
+        const pairWeight = pair[this.mode];
 
-        let datumWeight = 0;
-        if (this.mode === 'all') {
-          datumWeight = datum.auto + datum.transit + datum.active;
-        } else {
-          datumWeight = datum[this.mode];
-        }
-
-        const newWeight = weight + datumWeight;
-        originX = (originX * weight + datum.originX * datumWeight)
+        const newWeight = weight + pairWeight;
+        originX = (originX * weight + pair.origin.x * pairWeight)
             / newWeight;
-        originY = (originY * weight + datum.originY * datumWeight)
+        originY = (originY * weight + pair.origin.y * pairWeight)
             / newWeight;
-        destX = (destX * weight + datum.destX * datumWeight)
+        destX = (destX * weight + pair.destination.x * pairWeight)
             / newWeight;
-        destY = (destY * weight + datum.destY * datumWeight)
+        destY = (destY * weight + pair.destination.y * pairWeight)
             / newWeight;
         weight = newWeight;
       }
@@ -318,6 +282,54 @@ export default class AppModel extends Model {
       min: minValue,
       max: maxValue,
     });
+  }
+
+  private updateGeographyWeight(): void {
+    this.geographyWeight = this.totalData
+        .filter((pair): boolean => {
+          if (this.geographyType === 'district') {
+            return pair.destination.district === this.geographyId;
+          } else {
+            return pair.destination.zone === this.geographyId;
+          }
+        })
+        .map((pair): number => pair[this.mode])
+        .reduce((acc, val): number => acc + val);
+  }
+
+  private combineClusterPoints(cluster: ODPair[]): [Point[], Point[]] {
+    const originZoneToPoint = new Map<number, Point>();
+    const destZoneToPoint = new Map<number, Point>();
+
+    cluster.forEach((pair): void => {
+      if (originZoneToPoint.has(pair.origin.zone)) {
+        originZoneToPoint.get(pair.origin.zone).weight += pair[this.mode];
+      } else {
+        originZoneToPoint.set(pair.origin.zone, new Point(
+            pair.origin.zone,
+            pair.origin.district,
+            pair.origin.x,
+            pair.origin.y,
+            pair[this.mode],
+        ));
+      }
+
+      if (destZoneToPoint.has(pair.destination.zone)) {
+        destZoneToPoint.get(pair.destination.zone).weight += pair[this.mode];
+      } else {
+        destZoneToPoint.set(pair.destination.zone, new Point(
+            pair.destination.zone,
+            pair.destination.district,
+            pair.destination.x,
+            pair.destination.y,
+            pair[this.mode],
+        ));
+      }
+    });
+
+    const originPoints = Array.from(originZoneToPoint.values());
+    const destinationPoints = Array.from(destZoneToPoint.values());
+    return [originPoints, destinationPoints];
   }
 
   private dispatchSelectionUpdated(): void {
