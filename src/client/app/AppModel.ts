@@ -106,7 +106,7 @@ export default class AppModel extends Model {
       this.lineWeight = lineWeight;
       this.emitter.emit('addClusters', {
         lineKey,
-        clusters: this.flowLineToData[lineKey],
+        clusters: this.flowLineToData.get(lineKey),
       });
     }
 
@@ -146,8 +146,25 @@ export default class AppModel extends Model {
   public updateMode(mode: string): void {
     this.emitter.emit('removeClusters');
     this.mode = mode;
-    this.dispatchControlsUpdated();
     this.processData();
+    this.geographyWeight = this.totalData
+        .filter((datum): boolean => {
+          if (this.geographyType === 'district') {
+            return datum.destDistrict === this.geographyId;
+          } else {
+            return datum.destZone === this.geographyId;
+          }
+        })
+        .map((datum): number => {
+          if (this.mode === 'all') {
+            return datum.auto + datum.transit + datum.active;
+          } else {
+            return datum[this.mode];
+          }
+        })
+        .reduce((acc, val): number => acc + val);
+    this.dispatchSelectionUpdated();
+    this.dispatchControlsUpdated();
   }
 
   /**
@@ -213,8 +230,8 @@ export default class AppModel extends Model {
     }
 
     // 50 k-means iterations
-    for (let n = 0; n < 50; n++) {
-      const datumToClosestFlowLine = {};
+    const datumToClosestFlowLine = {};
+    for (let n = 0; n < 100; n++) {
       for (let i = 0; i < this.selectedData.length; i++) {
         const datum = this.selectedData[i];
         let closestFlowLine = null;
@@ -238,14 +255,13 @@ export default class AppModel extends Model {
 
         datumToClosestFlowLine[i] = closestFlowLine;
       }
-
-      for (let i = 0; i < this.selectedData.length; i++) {
-        this.flowLineToData.get(datumToClosestFlowLine[i])
-            .push(this.selectedData[i]);
-      }
-      this.flowLines = this.calcNewFlowLines();
     }
 
+    for (let i = 0; i < this.selectedData.length; i++) {
+      this.flowLineToData.get(datumToClosestFlowLine[i])
+          .push(this.selectedData[i]);
+    }
+    this.flowLines = this.calcNewFlowLines();
     this.redrawFlowLines(this.flowLines);
   }
 
@@ -265,10 +281,6 @@ export default class AppModel extends Model {
           datumWeight = datum.auto + datum.transit + datum.active;
         } else {
           datumWeight = datum[this.mode];
-        }
-
-        if (datumWeight === 0) {
-          continue;
         }
 
         const newWeight = weight + datumWeight;
@@ -292,7 +304,7 @@ export default class AppModel extends Model {
   }
 
   private redrawFlowLines(flowLines: FlowLine[]): void {
-    let minValue = Number.MAX_VALUE;
+    let minValue = Number.POSITIVE_INFINITY;
     let maxValue = 0;
     for (let i = 0; i < flowLines.length; i++) {
       maxValue = Math.max(flowLines[i].weight, maxValue);
@@ -314,6 +326,7 @@ export default class AppModel extends Model {
       geographyWeight: this.geographyWeight,
       lineId: this.lineId,
       lineWeight: this.lineWeight,
+      mode: this.mode,
     });
   }
 
