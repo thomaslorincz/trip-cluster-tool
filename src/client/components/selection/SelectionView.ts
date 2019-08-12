@@ -6,6 +6,12 @@ export default class SelectionView extends View {
   private readonly geographyWeight: HTMLElement;
   private readonly selectedLine: HTMLElement;
   private readonly lineWeight: HTMLElement;
+  private readonly trips: Map<string, number> = new Map<string, number>([
+    ['all', 5136298],
+    ['auto', 4174613],
+    ['transit', 318250],
+    ['active', 643435],
+  ]);
 
   public constructor(container: Element, emitter: EventEmitter) {
     super(container, emitter);
@@ -18,7 +24,8 @@ export default class SelectionView extends View {
   }
 
   public draw(geographyType: string, geographyId: number,
-      geographyWeight: number, lineId: number, lineWeight: number): void {
+      geographyWeight: number, lineId: number, lineWeight: number,
+      mode: string): void {
     if (geographyId === -1) {
       this.selectedGeography.innerText = 'No geography selected';
       this.geographyWeight.classList.add('inactive');
@@ -33,11 +40,11 @@ export default class SelectionView extends View {
       if (geographyType === 'district') {
         this.selectedGeography.innerText = `District ${geographyId}`;
         this.geographyWeight.innerText
-            = `District trips: ${geographyWeight} / 5,136,299`;
+            = `District trips: ${geographyWeight} / ${this.trips.get(mode)}`;
       } else {
         this.selectedGeography.innerText = `Zone ${geographyId}`;
         this.geographyWeight.innerText
-            = `Zone trips: ${geographyWeight} / 5,136,299`;
+            = `Zone trips: ${geographyWeight} / ${this.trips.get(mode)}`;
       }
     }
 
