@@ -3,6 +3,7 @@ import * as mapboxgl from 'mapbox-gl';
 import proj4 from 'proj4';
 import * as d3 from 'd3-fetch';
 import FlowLine from '../../lib/FlowLine';
+import ODDatum from '../../lib/ODDatum';
 
 /** A view that represents an interactive map. */
 export default class MapView extends View {
@@ -256,7 +257,7 @@ export default class MapView extends View {
     }
   }
 
-  public addClusters(lineKey: string, clusters: FlowLine[]): void {
+  public addClusters(lineKey: string, clusters: ODDatum[], mode: string): void {
     this.map.setFilter('lineLayer', ['in', 'key', lineKey]);
     this.map.setFilter('lineArrows', ['in', 'key', lineKey]);
 
@@ -273,10 +274,17 @@ export default class MapView extends View {
     for (let i = 0; i < clusters.length; i++) {
       const cluster = clusters[i];
 
+      let weight = 0;
+      if (mode === 'all') {
+        weight = cluster.auto + cluster.transit + cluster.active;
+      } else {
+        weight = cluster[mode];
+      }
+
       originData.features.push({
         'type': 'Feature',
         'properties': {
-          'magnitude': Math.min(Math.max(cluster.weight, 32), 320),
+          'magnitude': Math.min(Math.max(weight, 32), 320),
         },
         'geometry': {
           'type': 'Point',
@@ -290,7 +298,7 @@ export default class MapView extends View {
       destData.features.push({
         'type': 'Feature',
         'properties': {
-          'magnitude': Math.min(Math.max(cluster.weight, 32), 320),
+          'magnitude': Math.min(Math.max(weight, 32), 320),
         },
         'geometry': {
           'type': 'Point',

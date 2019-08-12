@@ -107,6 +107,7 @@ export default class AppModel extends Model {
       this.emitter.emit('addClusters', {
         lineKey,
         clusters: this.flowLineToData.get(lineKey),
+        mode: this.mode,
       });
     }
 

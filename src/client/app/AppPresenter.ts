@@ -31,8 +31,8 @@ export default class AppPresenter extends Presenter<AppModel, View> {
     this.emitter.on('removeClusters', (): void => {
       this.mapView.removeClusters();
     });
-    this.emitter.on('addClusters', ({lineKey, clusters}): void => {
-      this.mapView.addClusters(lineKey, clusters);
+    this.emitter.on('addClusters', ({lineKey, clusters, mode}): void => {
+      this.mapView.addClusters(lineKey, clusters, mode);
     });
 
     this.selectionView = new SelectionView(
