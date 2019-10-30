@@ -117,7 +117,7 @@ export default class MapView extends View {
       this.map.on('click', (event): void => {
         const districts = this.map.queryRenderedFeatures(
             event.point,
-            'districts'
+            'districts',
         );
         const zones = this.map.queryRenderedFeatures(event.point, 'zones');
         const lines = this.map.queryRenderedFeatures(event.point, 'lineLayer');
@@ -131,7 +131,7 @@ export default class MapView extends View {
             this.emitter.emit(
                 'lineClicked',
                 feature.properties['key'],
-                feature.properties['magnitude']
+                feature.properties['magnitude'],
             );
             return;
           }

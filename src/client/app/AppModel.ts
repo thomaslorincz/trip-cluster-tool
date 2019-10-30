@@ -38,7 +38,7 @@ export default class AppModel extends Model {
                 parseFloat(totalData[i]['origin_y']),
                 parseInt(totalData[i]['auto'])
                 + parseInt(totalData[i]['transit'])
-                + parseInt(totalData[i]['active'])
+                + parseInt(totalData[i]['active']),
             ),
             new Point(
                 parseInt(totalData[i]['dest_zone']),
@@ -47,11 +47,11 @@ export default class AppModel extends Model {
                 parseFloat(totalData[i]['dest_y']),
                 parseInt(totalData[i]['auto'])
                 + parseInt(totalData[i]['transit'])
-                + parseInt(totalData[i]['active'])
+                + parseInt(totalData[i]['active']),
             ),
             parseInt(totalData[i]['auto']),
             parseInt(totalData[i]['transit']),
-            parseInt(totalData[i]['active'])
+            parseInt(totalData[i]['active']),
         ));
       }
 
@@ -182,7 +182,7 @@ export default class AppModel extends Model {
             datum.origin.y,
             datum.destination.x,
             datum.destination.y,
-            datum[this.mode]
+            datum[this.mode],
         ));
       }
     }
@@ -215,7 +215,7 @@ export default class AppModel extends Model {
               Math.pow(pair.origin.x - flowLine.originX, 2)
               + Math.pow(pair.origin.y - flowLine.originY, 2)
               + Math.pow(pair.destination.x - flowLine.destX, 2)
-              + Math.pow(pair.destination.y - flowLine.destY, 2)
+              + Math.pow(pair.destination.y - flowLine.destY, 2),
           );
 
           if (dist < minDist) {
@@ -261,7 +261,7 @@ export default class AppModel extends Model {
       }
 
       newFlowLines.push(
-          new FlowLine(key, originX, originY, destX, destY, weight)
+          new FlowLine(key, originX, originY, destX, destY, weight),
       );
     });
 
