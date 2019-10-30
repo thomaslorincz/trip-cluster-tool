@@ -37,7 +37,7 @@ export default class AppPresenter extends Presenter<AppModel, View> {
 
     this.selectionView = new SelectionView(
         document.getElementById('selection-panel'),
-        this.emitter
+        this.emitter,
     );
     new SelectionPresenter(this.model, this.selectionView, this.emitter);
 
@@ -54,14 +54,14 @@ export default class AppPresenter extends Presenter<AppModel, View> {
               geographyWeight,
               lineId,
               lineWeight,
-              mode
+              mode,
           );
-        }
+        },
     );
 
     this.controlPanelView = new ControlPanelView(
         document.getElementById('control-panel'),
-        this.emitter
+        this.emitter,
     );
     new ControlPanelPresenter(this.model, this.controlPanelView, this.emitter);
 
@@ -69,7 +69,7 @@ export default class AppPresenter extends Presenter<AppModel, View> {
         'controlsUpdated',
         ({numFlowLines, geographyType, mode}): void => {
           this.controlPanelView.draw(numFlowLines, geographyType, mode);
-        }
+        },
     );
   }
 }
