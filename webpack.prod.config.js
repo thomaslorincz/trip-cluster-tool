@@ -1,4 +1,5 @@
 const path = require('path');
+const DotEnvPlugin = require('dotenv-webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebPackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -8,7 +9,7 @@ const CompressPlugin = require('compression-webpack-plugin');
 
 module.exports = {
   entry: {
-    main: './src/client/index.ts',
+    main: './src/client/index.tsx',
   },
   output: {
     path: path.join(__dirname, 'dist'),
@@ -33,13 +34,13 @@ module.exports = {
     },
   },
   resolve: {
-    extensions: ['.ts', '.js']
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
   },
   module: {
     rules: [
       {
         enforce: 'pre',
-        test: /\.(ts|js)$/,
+        test: /\.(tsx?|jsx?)$/,
         exclude: /node_modules/,
         loader: 'eslint-loader',
         options: {
@@ -49,12 +50,9 @@ module.exports = {
         },
       },
       {
-        test: /\.ts$/,
+        test: /\.tsx?$/,
         loader: 'ts-loader',
         exclude: /node_modules/,
-        options: {
-          configFile: 'tsconfig.prod.json',
-        },
       },
       {
         test: /\.html$/,
@@ -72,9 +70,11 @@ module.exports = {
     ],
   },
   plugins: [
+    new DotEnvPlugin(),
     new CopyWebpackPlugin([
-      {from: 'assets/images', to: 'assets/images'},
-      {from: 'assets/data/*.br', to: 'assets/data', flatten: true},
+      {from: 'src/client/assets/data'},
+      {from: 'src/client/assets/images'},
+      {from: 'src/client/assets/robots.txt'}
     ]),
     new HtmlWebPackPlugin({
       template: './src/client/index.html',
@@ -86,7 +86,7 @@ module.exports = {
       chunkFilename: '[name].css',
     }),
     new CompressPlugin({
-      test: /\.(js|css)$/,
+      test: /\.(js|css|csv|json)$/,
       algorithm: 'brotliCompress',
       filename: '[path].br[query]',
       deleteOriginalAssets: true,

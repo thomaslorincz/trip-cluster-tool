@@ -24,12 +24,20 @@ module.exports = (env, argv) => {
     module: {
       rules: [
         {
+          enforce: 'pre',
+          test: /\.(tsx?|jsx?)$/,
+          exclude: /node_modules/,
+          loader: 'eslint-loader',
+          options: {
+            emitWarning: true,
+            failOnError: true,
+            failOnWarning: false,
+          },
+        },
+        {
           test: /\.ts$/,
           loader: 'ts-loader',
           exclude: /node_modules/,
-          options: {
-            configFile: 'tsconfig.prod.json',
-          },
         },
       ],
     },
