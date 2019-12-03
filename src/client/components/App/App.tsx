@@ -1,14 +1,20 @@
 import * as React from 'react';
 import './App.css';
 
-import { MapView } from '../MapView/MapView';
+import { MapView, Feature } from '../MapView/MapView';
 import { ControlPanel } from '../ControlPanel/ControlPanel';
 
-export class App extends React.Component<{}, {}> {
+interface AppProps {
+  zones: Feature[];
+}
+
+export class App extends React.Component<AppProps, {}> {
   public render(): React.ReactNode {
+    const { zones } = this.props;
+
     return (
       <div className="app">
-        <MapView />
+        <MapView zones={zones} />
         {/*<ControlPanel />*/}
       </div>
     );
