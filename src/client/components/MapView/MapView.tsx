@@ -116,8 +116,8 @@ export class MapView extends React.Component<MapViewProps, MapViewState> {
         initialViewState={{
           longitude: -113.4938,
           latitude: 53.5461,
-          zoom: 11,
-          pitch: 45,
+          zoom: 8,
+          pitch: 0,
           bearing: 0
         }}
         controller={true}
