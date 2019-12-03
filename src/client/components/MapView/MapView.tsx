@@ -13,7 +13,12 @@ export interface Feature {
 }
 
 interface MapViewProps {
+  onClick: Function;
+  onHover: Function;
+  selected: number;
+  hovered: number;
   zones: Feature[];
+  cursor: string;
 }
 
 interface MapViewState {
@@ -49,7 +54,7 @@ export class MapView extends React.Component<MapViewProps, MapViewState> {
   }
 
   public render(): React.ReactNode {
-    const { zones } = this.props;
+    const { selected, hovered, zones, cursor } = this.props;
 
     return (
       <DeckGL
@@ -61,17 +66,50 @@ export class MapView extends React.Component<MapViewProps, MapViewState> {
             stroked: true,
             filled: true,
             extruded: false,
-            lineWidthScale: 20,
+            lineWidthScale: 1,
             lineWidthMinPixels: 1,
-            getFillColor: [255, 255, 255, 40],
-            getRadius: 100,
-            getLineWidth: 1,
+            getLineColor: [0, 0, 0, 255],
+            getFillColor: (f: Feature): number[] => {
+              if (f.properties.id === selected) {
+                return [0, 0, 255, 200];
+              } else {
+                return [255, 255, 255, 40];
+              }
+            },
+            getLineWidth: 2,
+            updateTriggers: {
+              getFillColor: [selected]
+            },
+            onClick: (info): void => {
+              this.props.onClick(info.object.properties.id);
+            },
             onHover: (info): void => {
-              this.setState({
-                hoveredObject: info.object,
-                pointerX: info.x,
-                pointerY: info.y
-              });
+              if (info.object) {
+                this.props.onHover(info.object.properties.id);
+              } else {
+                this.props.onHover(null);
+              }
+            }
+          }),
+          new GeoJsonLayer({
+            id: 'hovered',
+            data: zones,
+            pickable: false,
+            stroked: true,
+            filled: false,
+            extruded: false,
+            lineWidthScale: 1,
+            lineWidthMinPixels: 1,
+            getLineColor: (f: Feature): number[] => {
+              if (f.properties.id === hovered) {
+                return [255, 255, 255, 255];
+              } else {
+                return [255, 255, 255, 0];
+              }
+            },
+            getLineWidth: 4,
+            updateTriggers: {
+              getLineColor: [hovered]
             }
           })
         ]}
@@ -83,6 +121,7 @@ export class MapView extends React.Component<MapViewProps, MapViewState> {
           bearing: 0
         }}
         controller={true}
+        getCursor={(): string => cursor}
       >
         <StaticMap
           reuseMaps
