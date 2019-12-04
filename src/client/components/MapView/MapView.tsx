@@ -17,7 +17,7 @@ interface MapViewProps {
   onHover: Function;
   selected: number;
   hovered: number;
-  zones: Feature[];
+  boundaries: Feature[];
   cursor: string;
 }
 
@@ -54,14 +54,14 @@ export class MapView extends React.Component<MapViewProps, MapViewState> {
   }
 
   public render(): React.ReactNode {
-    const { selected, hovered, zones, cursor } = this.props;
+    const { selected, hovered, boundaries, cursor } = this.props;
 
     return (
       <DeckGL
         layers={[
           new GeoJsonLayer({
-            id: 'zones',
-            data: zones,
+            id: 'boundaries',
+            data: boundaries,
             pickable: true,
             stroked: true,
             filled: true,
@@ -92,8 +92,8 @@ export class MapView extends React.Component<MapViewProps, MapViewState> {
             }
           }),
           new GeoJsonLayer({
-            id: 'hovered',
-            data: zones,
+            id: 'outline',
+            data: boundaries,
             pickable: false,
             stroked: true,
             filled: false,
