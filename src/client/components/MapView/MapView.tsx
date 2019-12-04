@@ -12,49 +12,66 @@ export interface Feature {
   geometry: { type: string; coordinates: number[] };
 }
 
-interface MapViewProps {
+interface Props {
   onClick: Function;
   onHover: Function;
   selected: number;
   hovered: number;
   boundaries: Feature[];
+  tripVolume: Map<number, number>;
+  minVolume: number;
+  maxVolume: number;
   cursor: string;
 }
 
-interface MapViewState {
-  hoveredObject: Feature;
-  pointerX: number;
-  pointerY: number;
-}
+export class MapView extends React.Component<Props, {}> {
+  // http://colorbrewer2.org/#type=sequential&scheme=RdPu&n=9
+  private colourRange = [
+    [255, 255, 255, 40], // Base colour
+    [255, 247, 243, 80], // #fff7f3
+    [253, 224, 221, 80], // #fde0dd
+    [252, 197, 192, 80], // #fcc5c0
+    [250, 159, 181, 80], // '#fa9fb5',
+    [247, 104, 161, 80], // '#f768a1',
+    [221, 52, 151, 80], // #dd3497
+    [174, 1, 126, 80], // '#ae017e',
+    [122, 1, 119, 80], // '#7a0177',
+    [73, 0, 106, 80] // '#49006a'
+  ];
 
-export class MapView extends React.Component<MapViewProps, MapViewState> {
   public componentDidMount(): void {
+    // Prevent a context menu from appearing on right-click
     document
       .getElementById('deckgl-wrapper')
       .addEventListener('contextmenu', event => event.preventDefault());
   }
 
-  private renderTooltip(): React.ReactNode {
-    const { hoveredObject, pointerX, pointerY } = this.state || {};
-    return (
-      hoveredObject && (
-        <div
-          style={{
-            position: 'absolute',
-            zIndex: 1,
-            pointerEvents: 'none',
-            left: pointerX,
-            top: pointerY
-          }}
-        >
-          {hoveredObject.properties.id}
-        </div>
-      )
-    );
+  /**
+   * Convert trip volume to choropleth colour.
+   * @param volume {number} The number of trips to/from (depending on flow
+   *     direction) the selected geography.
+   * @param min {number} The minimum (nonzero) trip volume to use in scaling.
+   * @param max {number} The maximum trip volume to use in scaling.
+   */
+  private volumeToColour(volume: number, min: number, max: number): number[] {
+    if (volume) {
+      const index = Math.round(((volume - min) / (max - min)) * 9);
+      return this.colourRange[index];
+    } else {
+      return [255, 255, 255, 40];
+    }
   }
 
   public render(): React.ReactNode {
-    const { selected, hovered, boundaries, cursor } = this.props;
+    const {
+      selected,
+      hovered,
+      boundaries,
+      tripVolume,
+      minVolume,
+      maxVolume,
+      cursor
+    } = this.props;
 
     return (
       <DeckGL
@@ -70,15 +87,15 @@ export class MapView extends React.Component<MapViewProps, MapViewState> {
             lineWidthMinPixels: 1,
             getLineColor: [0, 0, 0, 255],
             getFillColor: (f: Feature): number[] => {
-              if (f.properties.id === selected) {
-                return [0, 0, 255, 200];
-              } else {
-                return [255, 255, 255, 40];
-              }
+              return this.volumeToColour(
+                tripVolume.get(f.properties.id),
+                minVolume,
+                maxVolume
+              );
             },
             getLineWidth: 2,
             updateTriggers: {
-              getFillColor: [selected]
+              getFillColor: [tripVolume, minVolume, maxVolume]
             },
             onClick: (info): void => {
               this.props.onClick(info.object.properties.id);
@@ -96,20 +113,28 @@ export class MapView extends React.Component<MapViewProps, MapViewState> {
             data: boundaries,
             pickable: false,
             stroked: true,
-            filled: false,
+            filled: true,
             extruded: false,
             lineWidthScale: 1,
-            lineWidthMinPixels: 1,
-            getLineColor: (f: Feature): number[] => {
+            lineWidthMinPixels: 4,
+            getFillColor: (f: Feature): number[] => {
               if (f.properties.id === hovered) {
-                return [255, 255, 255, 255];
+                return [0, 0, 255, 40];
+              } else {
+                return [255, 255, 255, 0];
+              }
+            },
+            getLineColor: (f: Feature): number[] => {
+              if (f.properties.id === selected) {
+                return [0, 0, 255, 255];
               } else {
                 return [255, 255, 255, 0];
               }
             },
             getLineWidth: 4,
             updateTriggers: {
-              getLineColor: [hovered]
+              getFillColor: [hovered],
+              getLineColor: [selected]
             }
           })
         ]}
@@ -124,12 +149,10 @@ export class MapView extends React.Component<MapViewProps, MapViewState> {
         getCursor={(): string => cursor}
       >
         <StaticMap
-          reuseMaps
           mapStyle="mapbox://styles/mapbox/dark-v9"
           preventStyleDiffing={true}
           mapboxApiAccessToken={process.env.MAPBOX_TOKEN}
         />
-        {this.renderTooltip()}
       </DeckGL>
     );
   }
