@@ -5,6 +5,11 @@ import './App.css';
 import { MapView, Feature } from '../MapView/MapView';
 import { ControlPanel } from '../ControlPanel/ControlPanel';
 
+enum Metric {
+  Volume,
+  Density
+}
+
 enum FlowDirection {
   OToD,
   DToO
@@ -53,6 +58,7 @@ interface ODDatum {
 interface AppState {
   selected: number; // Selected geography ID
   hovered: number; // Hovered geography ID
+  metric: Metric; // Whether to calculate trip volume or density
   flowDirection: FlowDirection; // O -> D or D -> O
   odData: ODDatum[]; // Total OD data (from od.csv)
   tripData: Map<number, number>; // Map geography ID to volume/density
@@ -80,6 +86,7 @@ export class App extends React.Component<{}, AppState> {
     this.state = {
       selected: null,
       hovered: null,
+      metric: Metric.Volume,
       flowDirection: FlowDirection.OToD,
       odData: [],
       tripData: new Map<number, number>(),
