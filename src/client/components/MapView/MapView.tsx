@@ -41,6 +41,13 @@ export class MapView extends React.Component<Props, {}> {
   }
 
   /**
+   * Render the tooltip based on what is currently hovered.
+   */
+  private renderTooltip(): React.ReactNode {
+    return <div className="tooltip" />;
+  }
+
+  /**
    * Convert trip volume to choropleth colour.
    * @param volume {number} The number of trips to/from (depending on flow
    *     direction) the selected geography.
@@ -154,6 +161,7 @@ export class MapView extends React.Component<Props, {}> {
           preventStyleDiffing={true}
           mapboxApiAccessToken={process.env.MAPBOX_TOKEN}
         />
+        {this.renderTooltip()}
       </DeckGL>
     );
   }
