@@ -153,13 +153,20 @@ export class App extends React.Component<{}, AppState> {
    * will determine its choropleth colouration in the MapView.
    */
   private updateData(): void {
+    let geographies = this.state.districts;
     let originField = 'originDistrict';
     let destField = 'destDistrict';
 
     if (this.state.geographyType === GeographyType.Zone) {
+      geographies = this.state.zones;
       originField = 'originZone';
       destField = 'destZone';
     }
+
+    const idToFeature = new Map<number, Feature>();
+    geographies.forEach((feature: Feature) => {
+      idToFeature.set(feature.properties.id, feature);
+    });
 
     const tripData = new Map<number, number>();
     let minValue = Number.MAX_SAFE_INTEGER;
@@ -185,25 +192,30 @@ export class App extends React.Component<{}, AppState> {
       const purposeArray = Array.from(this.state.purposes);
       const timeArray = Array.from(this.state.times);
       odData.forEach((datum: ODDatum) => {
+        const id = datum[sumField];
+
         for (const mode of modeArray) {
-          tripData.set(
-            datum[sumField],
-            tripData.get(datum[sumField]) + datum[mode]
-          );
+          let addend = datum[mode];
+          if (this.state.metric === Metric.Density) {
+            addend /= idToFeature.get(id).properties.area;
+          }
+          tripData.set(id, tripData.get(id) + addend);
         }
 
         for (const purpose of purposeArray) {
-          tripData.set(
-            datum[sumField],
-            tripData.get(datum[sumField]) + datum[purpose]
-          );
+          let addend = datum[purpose];
+          if (this.state.metric === Metric.Density) {
+            addend /= idToFeature.get(id).properties.area;
+          }
+          tripData.set(id, tripData.get(id) + addend);
         }
 
         for (const time of timeArray) {
-          tripData.set(
-            datum[sumField],
-            tripData.get(datum[sumField]) + datum[time]
-          );
+          let addend = datum[time];
+          if (this.state.metric === Metric.Density) {
+            addend /= idToFeature.get(id).properties.area;
+          }
+          tripData.set(id, tripData.get(id) + addend);
         }
       });
 
