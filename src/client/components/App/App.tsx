@@ -67,9 +67,9 @@ interface AppState {
   geographyType: GeographyType; // The type of geography data to use
   districts: Feature[]; // GeoJSON boundaries of districts
   zones: Feature[]; // GeoJSON boundaries of zones
-  modes: Set<string>; // Set of all trip modes to use in calculations
-  purposes: Set<string>; // Set of all trip purposes to use in calculations
-  times: Set<string>; // Set of all time periods to use in calculations
+  modes: Map<string, boolean>; // Trip modes to use in calculations
+  purposes: Map<string, boolean>; // Trip purposes to use in calculations
+  times: Map<string, boolean>; // Trip times to use in calculations
 }
 
 /**
@@ -95,30 +95,37 @@ export class App extends React.Component<{}, AppState> {
       geographyType: GeographyType.District,
       districts: [],
       zones: [],
-      modes: new Set<string>(['auto', 'transit', 'active']),
-      purposes: new Set<string>([
-        'home',
-        'work',
-        'school',
-        'shop',
-        'eat',
-        'escort',
-        'personal',
-        'quick',
-        'social',
-        'recreation'
+      modes: new Map<string, boolean>([
+        ['all', true],
+        ['auto', true],
+        ['transit', true],
+        ['active', true]
       ]),
-      times: new Set<string>([
-        'early',
-        'amShoulder1',
-        'amCrown',
-        'amShoulder2',
-        'midday',
-        'pmShoulder1',
-        'pmCrown',
-        'pmShoulder2',
-        'evening',
-        'overnight'
+      purposes: new Map<string, boolean>([
+        ['all', true],
+        ['home', true],
+        ['work', true],
+        ['school', true],
+        ['shop', true],
+        ['eat', true],
+        ['escort', true],
+        ['personal', true],
+        ['quick', true],
+        ['social', true],
+        ['recreation', true]
+      ]),
+      times: new Map<string, boolean>([
+        ['all', true],
+        ['early', true],
+        ['amShoulder1', true],
+        ['amCrown', true],
+        ['amShoulder2', true],
+        ['midday', true],
+        ['pmShoulder1', true],
+        ['pmCrown', true],
+        ['pmShoulder2', true],
+        ['evening', true],
+        ['overnight', true]
       ])
     };
 
@@ -177,6 +184,8 @@ export class App extends React.Component<{}, AppState> {
       if (this.state.flowDirection === FlowDirection.DToO) {
         filterField = originField;
       }
+
+      // Filter data based on which geography is selected
       const odData = this.totalData.filter(
         (d: ODDatum) => d[filterField] === this.state.selected
       );
@@ -185,16 +194,30 @@ export class App extends React.Component<{}, AppState> {
       if (this.state.flowDirection === FlowDirection.DToO) {
         sumField = destField;
       }
+
+      // Create a set of all geographies that flow to/from the selected one
       const filtered = new Set(odData.map((d: ODDatum) => d[sumField]));
+      // Initialize the data sum to 0 for all entries in tripData
       filtered.forEach((id: number) => tripData.set(id, 0));
 
-      const modeArray = Array.from(this.state.modes);
-      const purposeArray = Array.from(this.state.purposes);
-      const timeArray = Array.from(this.state.times);
+      // Create a list of all checked entries for each filter
+      const checkedModes = [];
+      this.state.modes.forEach((checked: boolean, mode: string) => {
+        if (checked && mode !== 'all') checkedModes.push(mode);
+      });
+      const checkedPurposes = [];
+      this.state.purposes.forEach((checked: boolean, purpose: string) => {
+        if (checked && purpose !== 'all') checkedPurposes.push(purpose);
+      });
+      const checkedTimes = [];
+      this.state.times.forEach((checked: boolean, time: string) => {
+        if (checked && time !== 'all') checkedTimes.push(time);
+      });
+
       odData.forEach((datum: ODDatum) => {
         const id = datum[sumField];
 
-        for (const mode of modeArray) {
+        for (const mode of checkedModes) {
           let addend = datum[mode];
           if (this.state.metric === Metric.Density) {
             addend /= idToFeature.get(id).properties.area;
@@ -202,7 +225,7 @@ export class App extends React.Component<{}, AppState> {
           tripData.set(id, tripData.get(id) + addend);
         }
 
-        for (const purpose of purposeArray) {
+        for (const purpose of checkedPurposes) {
           let addend = datum[purpose];
           if (this.state.metric === Metric.Density) {
             addend /= idToFeature.get(id).properties.area;
@@ -210,7 +233,7 @@ export class App extends React.Component<{}, AppState> {
           tripData.set(id, tripData.get(id) + addend);
         }
 
-        for (const time of timeArray) {
+        for (const time of checkedTimes) {
           let addend = datum[time];
           if (this.state.metric === Metric.Density) {
             addend /= idToFeature.get(id).properties.area;
@@ -243,18 +266,109 @@ export class App extends React.Component<{}, AppState> {
   }
 
   /**
-   * Update the geography type to use. Districts are larger boundaries than
-   * zones.
-   * @param type {'district'|'zone'} The type of geography to use for
-   *     calculations.
+   * Update the flow direction to use in calculations. The selected geography is
+   * considered the destination when direction is O to D and the origin when
+   * direction is D to O.
+   * @param direction {string} The flow direction to use for calculations.
+   */
+  private updateFlowDirection(direction: string): void {
+    if (direction === 'od') {
+      this.setState({ flowDirection: FlowDirection.OToD });
+    } else if (direction === 'do') {
+      this.setState({ flowDirection: FlowDirection.DToO });
+    }
+    this.updateData();
+  }
+
+  /**
+   * Update the data metric to use in calculations. Volume is the count of trips
+   * to/from a geography and density is the count of trips divided by the area
+   * of the geography (in square km).
+   * @param metric {string} The type of metric to use for calculations.
+   */
+  private updateDataMetric(metric: string): void {
+    if (metric === 'volume') {
+      this.setState({ metric: Metric.Volume });
+    } else if (metric === 'density') {
+      this.setState({ metric: Metric.Density });
+    }
+    this.updateData();
+  }
+
+  /**
+   * Update the geography type to use in calculations. Districts are larger
+   * boundaries than zones. Each zone belongs to exactly one district.
+   * @param type {string} The type of geography to use for calculations.
    */
   private updateGeographyType(type: string): void {
     if (type === 'district') {
       this.setState({ geographyType: GeographyType.District });
-    } else {
+    } else if (type === 'zone') {
       this.setState({ geographyType: GeographyType.Zone });
     }
     this.updateData();
+  }
+
+  /**
+   * Clones the desired AppState Map and updates its contents. Filters are
+   * controlled by checkboxes so the contents are toggled on click.
+   * @param filter {Map<string, boolean>} The filter to update.
+   * @param value {string} The entry value to toggle.
+   */
+  private updateFilter(
+    filter: Map<string, boolean>,
+    value: string
+  ): Map<string, boolean> {
+    const cloned = new Map<string, boolean>(filter);
+
+    if (value === 'all') {
+      if (cloned.get('all')) {
+        // Uncheck all entries
+        cloned.forEach((_: boolean, key: string) => cloned.set(key, false));
+      } else {
+        // Check all entries
+        cloned.forEach((_: boolean, key: string) => cloned.set(key, true));
+      }
+    } else {
+      // Toggle the entry
+      cloned.set(value, !cloned.get(value));
+    }
+
+    return cloned;
+  }
+
+  /**
+   * Update the AppState according to what control entry is clicked.
+   * @param control {string} The type of control that was clicked.
+   * @param section {string} The type of section within the control that was
+   *     clicked.
+   * @param entry {string} The ID of the entry within the section that was
+   *     clicked.
+   */
+  private handleEntryClicked(
+    control: string,
+    section: string,
+    entry: string
+  ): void {
+    if (control === 'data') {
+      if (section === 'flow') {
+        this.updateFlowDirection(entry);
+      } else if (section === 'metric') {
+        this.updateDataMetric(entry);
+      } else if (section === 'geography') {
+        this.updateGeographyType(entry);
+      }
+    } else if (control === 'filter') {
+      if (section === 'mode') {
+        this.setState({ modes: this.updateFilter(this.state.modes, entry) });
+      } else if (section === 'purpose') {
+        this.setState({
+          purposes: this.updateFilter(this.state.purposes, entry)
+        });
+      } else if (section === 'time') {
+        this.setState({ times: this.updateFilter(this.state.times, entry) });
+      }
+    }
   }
 
   public render(): React.ReactNode {
@@ -275,7 +389,18 @@ export class App extends React.Component<{}, AppState> {
           onHover={(id): void => this.setState({ hovered: id })}
           cursor={this.state.hovered ? 'pointer' : 'grab'}
         />
-        {/*<ControlPanel />*/}
+        <ControlPanel
+          modes={this.state.modes}
+          purposes={this.state.purposes}
+          times={this.state.times}
+          onEntryClicked={(
+            control: string,
+            section: string,
+            entry: string
+          ): void => {
+            this.handleEntryClicked(control, section, entry);
+          }}
+        />
       </div>
     );
   }
