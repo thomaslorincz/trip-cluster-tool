@@ -119,8 +119,17 @@ export class App extends React.Component<{}, AppState> {
       ([odData, districts, zones]: [ODDatum[], Feature[], Feature[]]): void => {
         this.setState({ districts, zones });
 
-        // Use AppState defaults to calculate initial data
-        this.totalData = odData;
+        // Map all parsed string values to integers
+        this.totalData = [];
+        odData.forEach((value: ODDatum) => {
+          const mapped: ODDatum = {} as ODDatum;
+          for (const property in value) {
+            if (!Object.hasOwnProperty.call(value, property)) continue;
+            mapped[property] = parseInt(value[property]);
+          }
+          this.totalData.push(mapped);
+        });
+
         this.updateData();
       }
     );
@@ -147,26 +156,25 @@ export class App extends React.Component<{}, AppState> {
       const odData = this.totalData.filter(
         (d: ODDatum) => d[destField] === selected
       );
-      const origins = odData.map((d: ODDatum) => d[originField]);
-
-      for (const origin of origins) {
-        tripVolume[origin] = 0;
-      }
+      const origins = new Set(odData.map((d: ODDatum) => d[originField]));
+      origins.forEach((origin: number) => {
+        tripVolume.set(origin, 0);
+      });
 
       const modeArray = Array.from(mode);
       const purposeArray = Array.from(purpose);
       const timeArray = Array.from(time);
       odData.forEach((d: ODDatum) => {
         for (const m of modeArray) {
-          tripVolume.set(d[destField], tripVolume.get(d[destField]) + d[m]);
+          tripVolume.set(d[originField], tripVolume.get(d[originField]) + d[m]);
         }
 
         for (const p of purposeArray) {
-          tripVolume.set(d[destField], tripVolume.get(d[destField]) + d[p]);
+          tripVolume.set(d[originField], tripVolume.get(d[originField]) + d[p]);
         }
 
         for (const t of timeArray) {
-          tripVolume.set(d[destField], tripVolume.get(d[destField]) + d[t]);
+          tripVolume.set(d[originField], tripVolume.get(d[originField]) + d[t]);
         }
       });
 
