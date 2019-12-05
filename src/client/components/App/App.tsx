@@ -5,17 +5,17 @@ import './App.css';
 import { MapView, Feature } from '../MapView/MapView';
 import { ControlPanel } from '../ControlPanel/ControlPanel';
 
-enum Metric {
+export enum Metric {
   Volume,
   Density
 }
 
-enum FlowDirection {
+export enum FlowDirection {
   OToD,
   DToO
 }
 
-enum GeographyType {
+export enum GeographyType {
   District,
   Zone
 }
@@ -390,6 +390,9 @@ export class App extends React.Component<{}, AppState> {
           cursor={this.state.hovered ? 'pointer' : 'grab'}
         />
         <ControlPanel
+          flowDirection={this.state.flowDirection}
+          metric={this.state.metric}
+          geographyType={this.state.geographyType}
           modes={this.state.modes}
           purposes={this.state.purposes}
           times={this.state.times}
