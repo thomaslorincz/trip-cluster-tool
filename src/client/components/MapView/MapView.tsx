@@ -25,18 +25,13 @@ interface Props {
 }
 
 export class MapView extends React.Component<Props, {}> {
-  // http://colorbrewer2.org/#type=sequential&scheme=RdPu&n=9
+  // http://colorbrewer2.org/#type=sequential&scheme=RdPu&n=5
   private colourRange = [
-    [255, 255, 255, 40], // Base colour
-    [255, 247, 243, 140], // #fff7f3
-    [253, 224, 221, 140], // #fde0dd
-    [252, 197, 192, 140], // #fcc5c0
-    [250, 159, 181, 140], // '#fa9fb5',
-    [247, 104, 161, 140], // '#f768a1',
-    [221, 52, 151, 140], // #dd3497
-    [174, 1, 126, 140], // '#ae017e',
-    [122, 1, 119, 140], // '#7a0177',
-    [73, 0, 106, 140] // '#49006a'
+    [254, 235, 226, 80], // #feebe2
+    [251, 180, 185, 120], // #fbb4b9
+    [247, 104, 161, 160], // #f768a1,
+    [197, 27, 138, 200], // #c51b8a
+    [122, 1, 119, 240] // #7a0177,
   ];
 
   public componentDidMount(): void {
@@ -55,7 +50,14 @@ export class MapView extends React.Component<Props, {}> {
    */
   private volumeToColour(volume: number, min: number, max: number): number[] {
     if (volume) {
-      const index = Math.round(((volume - min) / (max - min)) * 9);
+      let index = Math.round(
+        ((volume - min) / (max - min)) * (this.colourRange.length - 1)
+      );
+
+      if (isNaN(index)) {
+        index = this.colourRange.length - 1;
+      }
+
       return this.colourRange[index];
     } else {
       return [255, 255, 255, 40];
