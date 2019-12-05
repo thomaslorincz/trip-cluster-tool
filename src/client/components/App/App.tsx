@@ -5,6 +5,11 @@ import './App.css';
 import { MapView, Feature } from '../MapView/MapView';
 import { ControlPanel } from '../ControlPanel/ControlPanel';
 
+enum FlowDirection {
+  OToD,
+  DToO
+}
+
 enum GeographyType {
   District,
   Zone
@@ -48,6 +53,7 @@ interface ODDatum {
 interface AppState {
   selected: number; // Selected geography ID
   hovered: number; // Hovered geography ID
+  flowDirection: FlowDirection;
   odData: ODDatum[];
   tripVolume: Map<number, number>;
   minVolume: number;
@@ -75,6 +81,7 @@ export class App extends React.Component<{}, AppState> {
     this.state = {
       selected: null,
       hovered: null,
+      flowDirection: FlowDirection.OToD,
       odData: [],
       tripVolume: new Map<number, number>(),
       minVolume: 0,
@@ -136,7 +143,14 @@ export class App extends React.Component<{}, AppState> {
   }
 
   private updateData(): void {
-    const { selected, geographyType, mode, purpose, time } = this.state;
+    const {
+      selected,
+      flowDirection,
+      geographyType,
+      mode,
+      purpose,
+      time
+    } = this.state;
 
     let originField = 'originDistrict';
     if (geographyType === GeographyType.Zone) {
@@ -153,28 +167,35 @@ export class App extends React.Component<{}, AppState> {
     let maxVolume = 0;
 
     if (selected) {
+      let filterField = destField;
+      if (flowDirection === FlowDirection.DToO) {
+        filterField = originField;
+      }
       const odData = this.totalData.filter(
-        (d: ODDatum) => d[destField] === selected
+        (d: ODDatum) => d[filterField] === selected
       );
-      const origins = new Set(odData.map((d: ODDatum) => d[originField]));
-      origins.forEach((origin: number) => {
-        tripVolume.set(origin, 0);
-      });
+
+      let sumField = originField;
+      if (flowDirection === FlowDirection.DToO) {
+        sumField = destField;
+      }
+      const filtered = new Set(odData.map((d: ODDatum) => d[sumField]));
+      filtered.forEach((id: number) => tripVolume.set(id, 0));
 
       const modeArray = Array.from(mode);
       const purposeArray = Array.from(purpose);
       const timeArray = Array.from(time);
       odData.forEach((d: ODDatum) => {
         for (const m of modeArray) {
-          tripVolume.set(d[originField], tripVolume.get(d[originField]) + d[m]);
+          tripVolume.set(d[sumField], tripVolume.get(d[sumField]) + d[m]);
         }
 
         for (const p of purposeArray) {
-          tripVolume.set(d[originField], tripVolume.get(d[originField]) + d[p]);
+          tripVolume.set(d[sumField], tripVolume.get(d[sumField]) + d[p]);
         }
 
         for (const t of timeArray) {
-          tripVolume.set(d[originField], tripVolume.get(d[originField]) + d[t]);
+          tripVolume.set(d[sumField], tripVolume.get(d[sumField]) + d[t]);
         }
       });
 
