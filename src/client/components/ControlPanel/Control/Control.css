@@ -1,0 +1,23 @@
+.control {
+    display: flex;
+    position: relative;
+    width: 200px;
+    height: auto;
+    background-color: slategrey;
+    border: 2px solid dimgrey;
+    border-radius: 20px;
+    margin: 4px 0;
+}
+
+.control-title {
+    display: flex;
+    position: relative;
+    width: 100%;
+    height: auto;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    font-size: 18px;
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+    text-transform: capitalize;
+}
