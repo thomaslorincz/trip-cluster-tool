@@ -53,18 +53,17 @@ interface ODDatum {
 interface AppState {
   selected: number; // Selected geography ID
   hovered: number; // Hovered geography ID
-  flowDirection: FlowDirection;
-  odData: ODDatum[];
-  tripVolume: Map<number, number>;
-  minVolume: number;
-  maxVolume: number;
+  flowDirection: FlowDirection; // O -> D or D -> O
+  odData: ODDatum[]; // Total OD data (from od.csv)
+  tripData: Map<number, number>; // Map geography ID to volume/density
+  minValue: number; // Minimum of tripData
+  maxValue: number; // Maximum of tripData
   geographyType: GeographyType; // The type of geography data to use
-  districts: Feature[];
-  zones: Feature[];
-  mode: Set<string>;
-  purpose: Set<string>;
-  time: Set<string>;
-  renderAbout: boolean;
+  districts: Feature[]; // GeoJSON boundaries of districts
+  zones: Feature[]; // GeoJSON boundaries of zones
+  modes: Set<string>; // Set of all trip modes to use in calculations
+  purposes: Set<string>; // Set of all trip purposes to use in calculations
+  times: Set<string>; // Set of all time periods to use in calculations
 }
 
 /**
@@ -83,14 +82,14 @@ export class App extends React.Component<{}, AppState> {
       hovered: null,
       flowDirection: FlowDirection.OToD,
       odData: [],
-      tripVolume: new Map<number, number>(),
-      minVolume: 0,
-      maxVolume: 0,
+      tripData: new Map<number, number>(),
+      minValue: 0,
+      maxValue: 0,
       geographyType: GeographyType.District,
       districts: [],
       zones: [],
-      mode: new Set<string>(['auto', 'transit', 'active']),
-      purpose: new Set<string>([
+      modes: new Set<string>(['auto', 'transit', 'active']),
+      purposes: new Set<string>([
         'home',
         'work',
         'school',
@@ -102,7 +101,7 @@ export class App extends React.Component<{}, AppState> {
         'social',
         'recreation'
       ]),
-      time: new Set<string>([
+      times: new Set<string>([
         'early',
         'amShoulder1',
         'amCrown',
@@ -113,8 +112,7 @@ export class App extends React.Component<{}, AppState> {
         'pmShoulder2',
         'evening',
         'overnight'
-      ]),
-      renderAbout: false
+      ])
     };
 
     // Load all required data files and add their contents to the AppState
@@ -142,70 +140,73 @@ export class App extends React.Component<{}, AppState> {
     );
   }
 
+  /**
+   * Calculate new data based on the options selected in the DataControl and
+   * FilterControl. Each geography will be mapped to a calculated value which
+   * will determine its choropleth colouration in the MapView.
+   */
   private updateData(): void {
-    const {
-      selected,
-      flowDirection,
-      geographyType,
-      mode,
-      purpose,
-      time
-    } = this.state;
-
     let originField = 'originDistrict';
-    if (geographyType === GeographyType.Zone) {
-      originField = 'originZone';
-    }
-
     let destField = 'destDistrict';
-    if (geographyType === GeographyType.Zone) {
+
+    if (this.state.geographyType === GeographyType.Zone) {
+      originField = 'originZone';
       destField = 'destZone';
     }
 
-    const tripVolume = new Map<number, number>();
-    let minVolume = Number.MAX_SAFE_INTEGER;
-    let maxVolume = 0;
+    const tripData = new Map<number, number>();
+    let minValue = Number.MAX_SAFE_INTEGER;
+    let maxValue = 0;
 
-    if (selected) {
+    if (this.state.selected) {
       let filterField = destField;
-      if (flowDirection === FlowDirection.DToO) {
+      if (this.state.flowDirection === FlowDirection.DToO) {
         filterField = originField;
       }
       const odData = this.totalData.filter(
-        (d: ODDatum) => d[filterField] === selected
+        (d: ODDatum) => d[filterField] === this.state.selected
       );
 
       let sumField = originField;
-      if (flowDirection === FlowDirection.DToO) {
+      if (this.state.flowDirection === FlowDirection.DToO) {
         sumField = destField;
       }
       const filtered = new Set(odData.map((d: ODDatum) => d[sumField]));
-      filtered.forEach((id: number) => tripVolume.set(id, 0));
+      filtered.forEach((id: number) => tripData.set(id, 0));
 
-      const modeArray = Array.from(mode);
-      const purposeArray = Array.from(purpose);
-      const timeArray = Array.from(time);
-      odData.forEach((d: ODDatum) => {
-        for (const m of modeArray) {
-          tripVolume.set(d[sumField], tripVolume.get(d[sumField]) + d[m]);
+      const modeArray = Array.from(this.state.modes);
+      const purposeArray = Array.from(this.state.purposes);
+      const timeArray = Array.from(this.state.times);
+      odData.forEach((datum: ODDatum) => {
+        for (const mode of modeArray) {
+          tripData.set(
+            datum[sumField],
+            tripData.get(datum[sumField]) + datum[mode]
+          );
         }
 
-        for (const p of purposeArray) {
-          tripVolume.set(d[sumField], tripVolume.get(d[sumField]) + d[p]);
+        for (const purpose of purposeArray) {
+          tripData.set(
+            datum[sumField],
+            tripData.get(datum[sumField]) + datum[purpose]
+          );
         }
 
-        for (const t of timeArray) {
-          tripVolume.set(d[sumField], tripVolume.get(d[sumField]) + d[t]);
+        for (const time of timeArray) {
+          tripData.set(
+            datum[sumField],
+            tripData.get(datum[sumField]) + datum[time]
+          );
         }
       });
 
-      tripVolume.forEach((volume: number) => {
-        minVolume = Math.min(minVolume, volume);
-        maxVolume = Math.max(maxVolume, volume);
+      tripData.forEach((volume: number) => {
+        minValue = Math.min(minValue, volume);
+        maxValue = Math.max(maxValue, volume);
       });
     }
 
-    this.setState({ tripVolume, minVolume, maxVolume });
+    this.setState({ tripData, minValue, maxValue });
   }
 
   /**
@@ -248,9 +249,9 @@ export class App extends React.Component<{}, AppState> {
               ? this.state.districts
               : this.state.zones
           }
-          tripVolume={this.state.tripVolume}
-          minVolume={this.state.minVolume}
-          maxVolume={this.state.maxVolume}
+          tripData={this.state.tripData}
+          minValue={this.state.minValue}
+          maxValue={this.state.maxValue}
           onClick={(id): void => this.updateSelected(id)}
           onHover={(id): void => this.setState({ hovered: id })}
           cursor={this.state.hovered ? 'pointer' : 'grab'}

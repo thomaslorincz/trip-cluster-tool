@@ -1,5 +1,4 @@
 import * as React from 'react';
-import 'mapbox-gl/dist/mapbox-gl.css';
 import './MapView.css';
 
 import DeckGL from '@deck.gl/react';
@@ -8,7 +7,7 @@ import { StaticMap } from 'react-map-gl';
 
 export interface Feature {
   type: string;
-  properties: { id: number };
+  properties: { id: number; area: number };
   geometry: { type: string; coordinates: number[] };
 }
 
@@ -18,9 +17,9 @@ interface Props {
   selected: number;
   hovered: number;
   boundaries: Feature[];
-  tripVolume: Map<number, number>;
-  minVolume: number;
-  maxVolume: number;
+  tripData: Map<number, number>;
+  minValue: number;
+  maxValue: number;
   cursor: string;
 }
 
@@ -69,9 +68,9 @@ export class MapView extends React.Component<Props, {}> {
       selected,
       hovered,
       boundaries,
-      tripVolume,
-      minVolume,
-      maxVolume,
+      tripData,
+      minValue,
+      maxValue,
       cursor
     } = this.props;
 
@@ -90,14 +89,14 @@ export class MapView extends React.Component<Props, {}> {
             getLineColor: [0, 0, 0, 255],
             getFillColor: (f: Feature): number[] => {
               return this.volumeToColour(
-                tripVolume.get(f.properties.id),
-                minVolume,
-                maxVolume
+                tripData.get(f.properties.id),
+                minValue,
+                maxValue
               );
             },
             getLineWidth: 2,
             updateTriggers: {
-              getFillColor: [tripVolume, minVolume, maxVolume]
+              getFillColor: [tripData, minValue, maxValue]
             },
             onClick: (info): void => {
               this.props.onClick(info.object.properties.id);
