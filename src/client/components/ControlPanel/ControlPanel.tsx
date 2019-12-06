@@ -94,7 +94,6 @@ export class ControlPanel extends React.Component<Props, {}> {
               label: 'Transportation Mode',
               type: SectionType.Checkbox,
               entries: [
-                { id: 'all', label: 'All Modes', checked: modes.get('all') },
                 { id: 'auto', label: 'Auto', checked: modes.get('auto') },
                 {
                   id: 'transit',
@@ -109,11 +108,6 @@ export class ControlPanel extends React.Component<Props, {}> {
               label: 'Trip Purpose',
               type: SectionType.Checkbox,
               entries: [
-                {
-                  id: 'all',
-                  label: 'All Purposes',
-                  checked: purposes.get('all')
-                },
                 { id: 'home', label: 'Home', checked: purposes.get('home') },
                 { id: 'work', label: 'Work', checked: purposes.get('work') },
                 {
@@ -155,7 +149,6 @@ export class ControlPanel extends React.Component<Props, {}> {
               label: 'Time of Day',
               type: SectionType.Checkbox,
               entries: [
-                { id: 'all', label: 'All Times', checked: times.get('all') },
                 {
                   id: 'early',
                   label: 'Early Morning (04:00-06:00)',

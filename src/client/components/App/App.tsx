@@ -11,8 +11,8 @@ export enum Metric {
 }
 
 export enum FlowDirection {
-  OToD,
-  DToO
+  OToD, // Origin to Destination
+  DToO // Destination to Origin
 }
 
 export enum GeographyType {
@@ -21,10 +21,9 @@ export enum GeographyType {
 }
 
 interface ODDatum {
-  // Origin-Destination Zone
+  // Origin-Destination Geographies
   originZone: number;
   destZone: number;
-  // Origin-Destination District
   originDistrict: number;
   destDistrict: number;
   // Transportation Mode
@@ -96,13 +95,11 @@ export class App extends React.Component<{}, AppState> {
       districts: [],
       zones: [],
       modes: new Map<string, boolean>([
-        ['all', true],
         ['auto', true],
         ['transit', true],
         ['active', true]
       ]),
       purposes: new Map<string, boolean>([
-        ['all', true],
         ['home', true],
         ['work', true],
         ['school', true],
@@ -115,7 +112,6 @@ export class App extends React.Component<{}, AppState> {
         ['recreation', true]
       ]),
       times: new Map<string, boolean>([
-        ['all', true],
         ['early', true],
         ['amShoulder1', true],
         ['amCrown', true],
@@ -203,15 +199,15 @@ export class App extends React.Component<{}, AppState> {
       // Create a list of all checked entries for each filter
       const checkedModes = [];
       this.state.modes.forEach((checked: boolean, mode: string) => {
-        if (checked && mode !== 'all') checkedModes.push(mode);
+        if (checked) checkedModes.push(mode);
       });
       const checkedPurposes = [];
       this.state.purposes.forEach((checked: boolean, purpose: string) => {
-        if (checked && purpose !== 'all') checkedPurposes.push(purpose);
+        if (checked) checkedPurposes.push(purpose);
       });
       const checkedTimes = [];
       this.state.times.forEach((checked: boolean, time: string) => {
-        if (checked && time !== 'all') checkedTimes.push(time);
+        if (checked) checkedTimes.push(time);
       });
 
       odData.forEach((datum: ODDatum) => {
@@ -301,6 +297,9 @@ export class App extends React.Component<{}, AppState> {
    * @param type {string} The type of geography to use for calculations.
    */
   private updateGeographyType(type: string): void {
+    // Clear current selection
+    this.setState({ selected: null });
+
     if (type === 'district') {
       this.setState({ geographyType: GeographyType.District });
     } else if (type === 'zone') {
@@ -321,18 +320,8 @@ export class App extends React.Component<{}, AppState> {
   ): Map<string, boolean> {
     const cloned = new Map<string, boolean>(filter);
 
-    if (value === 'all') {
-      if (cloned.get('all')) {
-        // Uncheck all entries
-        cloned.forEach((_: boolean, key: string) => cloned.set(key, false));
-      } else {
-        // Check all entries
-        cloned.forEach((_: boolean, key: string) => cloned.set(key, true));
-      }
-    } else {
-      // Toggle the entry
-      cloned.set(value, !cloned.get(value));
-    }
+    // Toggle the entry
+    cloned.set(value, !cloned.get(value));
 
     return cloned;
   }
