@@ -107,7 +107,6 @@ export class App extends React.Component<{}, AppState> {
       d3.json('./zones.json')
     ]).then(
       ([odData, districts, zones]: [{}[], Feature[], Feature[]]): void => {
-        console.time('data');
         // Map all parsed string values to integers
         odData.forEach(value => {
           const mapped: ODDatum = {} as ODDatum;
@@ -136,7 +135,6 @@ export class App extends React.Component<{}, AppState> {
           this.totalData.push(mapped);
         });
 
-        console.timeEnd('data');
         this.districts = districts;
         this.zones = zones;
 
