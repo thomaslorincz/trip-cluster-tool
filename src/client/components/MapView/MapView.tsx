@@ -30,15 +30,6 @@ interface State {
 }
 
 export class MapView extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hovered: {} as Feature,
-      hoverX: 0,
-      hoverY: 0
-    };
-  }
-
   // http://colorbrewer2.org/#type=sequential&scheme=RdPu&n=5
   private colourRange = [
     [254, 235, 226, 80], // #feebe2
@@ -47,6 +38,15 @@ export class MapView extends React.Component<Props, State> {
     [197, 27, 138, 200], // #c51b8a
     [122, 1, 119, 240] // #7a0177,
   ];
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hovered: {} as Feature,
+      hoverX: 0,
+      hoverY: 0
+    };
+  }
 
   public componentDidMount(): void {
     // Prevent a context menu from appearing on right-click
