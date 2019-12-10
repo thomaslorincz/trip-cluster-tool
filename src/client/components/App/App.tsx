@@ -4,6 +4,7 @@ import './App.css';
 
 import { MapView, Feature } from '../MapView/MapView';
 import { ControlPanel } from '../ControlPanel/ControlPanel';
+import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
 
 export enum FlowDirection {
   OToD, // Origin to Destination
@@ -43,6 +44,8 @@ interface ODDatum {
 }
 
 interface AppState {
+  loading: boolean;
+
   // Map data
   selected: number; // Selected geography ID
   hovered: number; // Hovered geography ID
@@ -77,6 +80,7 @@ export class App extends React.Component<{}, AppState> {
 
     // Default state of the App
     this.state = {
+      loading: true,
       selected: null,
       hovered: null,
       metric: Metric.Volume,
@@ -137,6 +141,8 @@ export class App extends React.Component<{}, AppState> {
 
         this.districts = districts;
         this.zones = zones;
+
+        this.setState({ loading: false });
 
         this.updateData(
           this.state.selected,
@@ -455,6 +461,7 @@ export class App extends React.Component<{}, AppState> {
             this.handleEntryClicked(control, section, entry);
           }}
         />
+        <LoadingScreen loading={this.state.loading} />
       </div>
     );
   }
