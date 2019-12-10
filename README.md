@@ -1,7 +1,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat)](https://github.com/prettier/prettier)
 # Trip Cluster Tool
-Trip Cluster Tool is An exploratory data visualization of traffic flow in the Edmonton Central Metropolitan Area.
+Trip Cluster Tool is an exploratory data visualization of traffic flow in the Edmonton Central Metropolitan Area.
 
 (Trip Cluster Tool is a web app built with [React](https://reactjs.org/), [deck.gl](https://deck.gl/#/), and [react-map-gl](https://uber.github.io/react-map-gl/#/))
 ## Supported Browsers
