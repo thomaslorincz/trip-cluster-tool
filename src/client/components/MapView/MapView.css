@@ -1,0 +1,19 @@
+.map {
+    display: block;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+.tooltip {
+    position: absolute;
+    color: var(--text-primary-color);
+    background-color: var(--app-primary-color);
+    z-index: 1;
+    pointer-events: none;
+    font-family: var(--font-value-text);
+    box-shadow: var(--app-element-shadow);
+    padding: 1px 4px;
+    border: 2px solid var(--app-secondary-color);
+    border-radius: 4px;
+}

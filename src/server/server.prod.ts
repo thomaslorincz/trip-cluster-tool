@@ -5,7 +5,11 @@ import * as expressStaticGzip from 'express-static-gzip';
 const app = express();
 const port = process.env.PORT || 8080;
 
-const sslRedirect = (req, res, next): void => {
+const sslRedirect = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+): void => {
   if (req.headers['x-forwarded-proto'] === 'https') {
     return next();
   } else {
@@ -18,10 +22,13 @@ app.use(helmet());
 if (port === process.env.PORT) {
   app.use(sslRedirect);
 }
-app.use('/', expressStaticGzip(__dirname, {
-  enableBrotli: true,
-  customCompressions: [],
-  orderPreference: ['br'],
-}));
+app.use(
+  '/',
+  expressStaticGzip(__dirname, {
+    enableBrotli: true,
+    customCompressions: [],
+    orderPreference: ['br']
+  })
+);
 
 app.listen(port, (): void => console.log(`Listening on port ${port}`));
