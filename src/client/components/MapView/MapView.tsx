@@ -30,13 +30,15 @@ interface State {
 }
 
 export class MapView extends React.Component<Props, State> {
-  // http://colorbrewer2.org/#type=sequential&scheme=RdPu&n=5
+  // http://colorbrewer2.org/#type=sequential&scheme=RdPu&n=7
   private colourRange = [
-    [254, 235, 226, 80], // #feebe2
-    [251, 180, 185, 120], // #fbb4b9
+    [254, 235, 226, 160], // #feebe2
+    [252, 197, 192, 160], // #fcc5c0
+    [250, 159, 181, 160], // #fa9fb5
     [247, 104, 161, 160], // #f768a1,
-    [197, 27, 138, 200], // #c51b8a
-    [122, 1, 119, 240] // #7a0177,
+    [221, 52, 151, 160], // #dd3497
+    [174, 1, 126, 160], // ae017e
+    [122, 1, 119, 160] // #7a0177,
   ];
 
   constructor(props: Props) {
