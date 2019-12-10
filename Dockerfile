@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 COPY . .
 
 # Install app dependencies
-RUN npm ci --only=production
+RUN npm ci
 
 # Build/bundle source code
 RUN npm run build:prod
