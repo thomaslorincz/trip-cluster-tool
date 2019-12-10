@@ -27,6 +27,7 @@ code {
     --text-secondary-color: #dcdcdc;
     --font-label-text: "Montserrat", sans-serif;
     --font-value-text: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+    --app-element-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.4);
 }
 
 #root {
