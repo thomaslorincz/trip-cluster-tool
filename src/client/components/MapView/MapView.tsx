@@ -90,8 +90,9 @@ export class MapView extends React.Component<Props, State> {
       <div
         className="tooltip"
         style={{
-          left: this.state.hoverX - 20,
-          top: this.state.hoverY - 20
+          display: text ? 'block' : 'none',
+          left: this.state.hoverX - (6 + (text.length / 2) * 8),
+          top: this.state.hoverY - 28
         }}
       >
         {text}
