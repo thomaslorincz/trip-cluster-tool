@@ -40,4 +40,4 @@ npm start
 ## Update Data
 To update the data of this tool, please use the [trip-cluster-tool-data](https://github.com/thomaslorincz/trip-cluster-tool-data) project.
 
-When new data is produced, replace the appropriate file in the src/client/assets/data directory.
+When new data is produced, replace the appropriate file in the ```src/client/assets/data``` directory.
