@@ -161,7 +161,7 @@ export class App extends React.Component<{}, AppState> {
     metric: Metric,
     geographyType: GeographyType,
     modes: Map<string, boolean>,
-    purposes: Map<string, boolean>,
+    purposes: Map<string, boolean>
   ): void {
     let geographies = this.districts;
     let originField = 'originDistrict';
@@ -210,20 +210,20 @@ export class App extends React.Component<{}, AppState> {
       });
 
       odData.forEach((datum: ODDatum) => {
-        let tripDatum = 0;
+        let addend = 0;
 
         for (const mode of checkedModes) {
           for (const purpose of checkedPurposes) {
-            tripDatum += datum[mode][purpose];
+            addend += datum[mode][purpose];
           }
         }
 
         // If metric is density, divide trip volume with feature area
         if (metric === Metric.Density) {
-          tripDatum /= idToFeature.get(datum[sumField]).properties.area;
+          addend /= idToFeature.get(datum[sumField]).properties.area;
         }
 
-        tripData.set(datum[sumField], tripDatum);
+        tripData.set(datum[sumField], tripData.get(datum[sumField]) + addend);
       });
 
       tripData.forEach((volume: number) => {
