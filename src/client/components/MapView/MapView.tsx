@@ -23,7 +23,13 @@ interface Props {
   cursor: string;
 }
 
-export class MapView extends React.Component<Props, {}> {
+interface State {
+  hovered: Feature;
+  hoverX: number;
+  hoverY: number;
+}
+
+export class MapView extends React.Component<Props, State> {
   // http://colorbrewer2.org/#type=sequential&scheme=RdPu&n=5
   private colourRange = [
     [254, 235, 226, 80], // #feebe2
@@ -32,6 +38,15 @@ export class MapView extends React.Component<Props, {}> {
     [197, 27, 138, 200], // #c51b8a
     [122, 1, 119, 240] // #7a0177,
   ];
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hovered: {} as Feature,
+      hoverX: 0,
+      hoverY: 0
+    };
+  }
 
   public componentDidMount(): void {
     // Prevent a context menu from appearing on right-click
@@ -61,6 +76,28 @@ export class MapView extends React.Component<Props, {}> {
     } else {
       return [255, 255, 255, 40];
     }
+  }
+
+  private renderTooltip(feature: Feature): React.ReactNode {
+    const { tripData } = this.props;
+
+    let text = '';
+    if (feature && feature.properties) {
+      text = Math.round(tripData.get(feature.properties.id)).toString();
+    }
+
+    return (
+      <div
+        className="tooltip"
+        style={{
+          display: text ? 'block' : 'none',
+          left: this.state.hoverX - (6 + (text.length / 2) * 8),
+          top: this.state.hoverY - 28
+        }}
+      >
+        {text}
+      </div>
+    );
   }
 
   public render(): React.ReactNode {
@@ -102,6 +139,11 @@ export class MapView extends React.Component<Props, {}> {
               this.props.onClick(info.object.properties.id);
             },
             onHover: (info): void => {
+              this.setState({
+                hovered: info.object,
+                hoverX: info.x,
+                hoverY: info.y
+              });
               if (info.object) {
                 this.props.onHover(info.object.properties.id);
               } else {
@@ -154,6 +196,7 @@ export class MapView extends React.Component<Props, {}> {
           preventStyleDiffing={true}
           mapboxApiAccessToken={process.env.MAPBOX_TOKEN}
         />
+        {this.renderTooltip(this.state.hovered)}
       </DeckGL>
     );
   }
