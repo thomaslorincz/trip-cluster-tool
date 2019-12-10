@@ -52,12 +52,12 @@ export class ControlPanel extends React.Component<Props, {}> {
               entries: [
                 {
                   id: 'volume',
-                  label: 'Trip Volume',
+                  label: 'Trip Volume [trips]',
                   checked: metric === Metric.Volume
                 },
                 {
                   id: 'density',
-                  label: 'Trip Density',
+                  label: 'Trip Density [trips/km²]',
                   checked: metric === Metric.Density
                 }
               ]
