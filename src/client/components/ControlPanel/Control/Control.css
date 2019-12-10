@@ -10,7 +10,7 @@
     margin: 6px 0;
     padding: 8px;
     color: var(--text-primary-color);
-    box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: var(--app-element-shadow);
 }
 
 .control-title {
@@ -22,7 +22,7 @@
     align-items: center;
     flex-direction: row;
     font-size: 18px;
-    font-family: "Montserrat", sans-serif;
+    font-family: var(--font-label-text);
     text-transform: capitalize;
 }
 
@@ -49,7 +49,7 @@
     width: 100%;
     height: auto;
     font-size: 14px;
-    font-family: "Montserrat", sans-serif;
+    font-family: var(--font-label-text);
     margin: 4px 0;
 }
 
@@ -66,7 +66,7 @@
     border-radius: 9px;
     align-items: center;
     color: var(--text-secondary-color);
-    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-family: var(--font-value-text);
     user-select: none;
 }
 
