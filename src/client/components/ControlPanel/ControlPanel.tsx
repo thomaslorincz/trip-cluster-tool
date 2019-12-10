@@ -10,7 +10,6 @@ interface Props {
   geographyType: GeographyType;
   modes: Map<string, boolean>;
   purposes: Map<string, boolean>;
-  times: Map<string, boolean>;
   onEntryClicked: Function;
 }
 
@@ -21,8 +20,7 @@ export class ControlPanel extends React.Component<Props, {}> {
       metric,
       geographyType,
       modes,
-      purposes,
-      times
+      purposes
     } = this.props;
 
     return (
@@ -94,7 +92,6 @@ export class ControlPanel extends React.Component<Props, {}> {
               label: 'Transportation Mode',
               type: SectionType.Checkbox,
               entries: [
-                { id: 'all', label: 'All Modes', checked: modes.get('all') },
                 { id: 'auto', label: 'Auto', checked: modes.get('auto') },
                 {
                   id: 'transit',
@@ -109,11 +106,6 @@ export class ControlPanel extends React.Component<Props, {}> {
               label: 'Trip Purpose',
               type: SectionType.Checkbox,
               entries: [
-                {
-                  id: 'all',
-                  label: 'All Purposes',
-                  checked: purposes.get('all')
-                },
                 { id: 'home', label: 'Home', checked: purposes.get('home') },
                 { id: 'work', label: 'Work', checked: purposes.get('work') },
                 {
@@ -124,87 +116,9 @@ export class ControlPanel extends React.Component<Props, {}> {
                 { id: 'shop', label: 'Shop', checked: purposes.get('shop') },
                 { id: 'eat', label: 'Eat', checked: purposes.get('eat') },
                 {
-                  id: 'escort',
-                  label: 'Escort',
-                  checked: purposes.get('escort')
-                },
-                {
-                  id: 'personal',
-                  label: 'Personal Business',
-                  checked: purposes.get('personal')
-                },
-                {
-                  id: 'quick',
-                  label: 'Quick Stop',
-                  checked: purposes.get('quick')
-                },
-                {
-                  id: 'social',
-                  label: 'Social',
-                  checked: purposes.get('social')
-                },
-                {
-                  id: 'recreation',
-                  label: 'Recreation',
-                  checked: purposes.get('recreation')
-                }
-              ]
-            },
-            {
-              id: 'time',
-              label: 'Time of Day',
-              type: SectionType.Checkbox,
-              entries: [
-                { id: 'all', label: 'All Times', checked: times.get('all') },
-                {
-                  id: 'early',
-                  label: 'Early Morning (04:00-06:00)',
-                  checked: times.get('early')
-                },
-                {
-                  id: 'amShoulder1',
-                  label: 'AM Shoulder 1 (06:00-07:00)',
-                  checked: times.get('amShoulder1')
-                },
-                {
-                  id: 'amCrown',
-                  label: 'AM Crown (07:00-08:00)',
-                  checked: times.get('amCrown')
-                },
-                {
-                  id: 'amShoulder2',
-                  label: 'AM Shoulder 2 (08:00-09:00)',
-                  checked: times.get('amShoulder2')
-                },
-                {
-                  id: 'midday',
-                  label: 'Midday (09:00-15:30)',
-                  checked: times.get('midday')
-                },
-                {
-                  id: 'pmShoulder1',
-                  label: 'PM Shoulder 1 (15:30-16:30)',
-                  checked: times.get('pmShoulder1')
-                },
-                {
-                  id: 'pmCrown',
-                  label: 'PM Crown (16:30-17:30)',
-                  checked: times.get('pmCrown')
-                },
-                {
-                  id: 'pmShoulder2',
-                  label: 'PM Shoulder 2 (17:30-18:30)',
-                  checked: times.get('pmShoulder2')
-                },
-                {
-                  id: 'evening',
-                  label: 'Evening (18:30-22:00)',
-                  checked: times.get('evening')
-                },
-                {
-                  id: 'overnight',
-                  label: 'Overnight (22:00-04:00)',
-                  checked: times.get('overnight')
+                  id: 'other',
+                  label: 'Other',
+                  checked: purposes.get('other')
                 }
               ]
             }

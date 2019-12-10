@@ -1,7 +1,7 @@
 {
   "name": "trip-cluster-tool",
   "version": "2.0.0",
-  "description": "An exploratory data visualization of traffic flow in Edmonton, Alberta, Canada",
+  "description": "An exploratory data visualization of traffic flow in the Edmonton Central Metropolitan Area",
   "engines": {
     "node": ">=12.0.0",
     "npm": ">=6.0.0"

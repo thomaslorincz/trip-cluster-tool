@@ -1,13 +1,12 @@
 .control-panel {
     display: flex;
     position: fixed;
+    width: auto;
+    height: 100%;
     flex-direction: column;
-    left: unset;
-    bottom: unset;
-    right: 0;
+    left: 0;
     top: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    justify-content: center;
-    padding: 8px;
+    margin: 6px 12px;
 }
