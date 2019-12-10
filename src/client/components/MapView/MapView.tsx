@@ -23,7 +23,22 @@ interface Props {
   cursor: string;
 }
 
-export class MapView extends React.Component<Props, {}> {
+interface State {
+  hovered: Feature;
+  hoverX: number;
+  hoverY: number;
+}
+
+export class MapView extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hovered: {} as Feature,
+      hoverX: 0,
+      hoverY: 0
+    };
+  }
+
   // http://colorbrewer2.org/#type=sequential&scheme=RdPu&n=5
   private colourRange = [
     [254, 235, 226, 80], // #feebe2
@@ -38,13 +53,6 @@ export class MapView extends React.Component<Props, {}> {
     document
       .getElementById('deckgl-wrapper')
       .addEventListener('contextmenu', event => event.preventDefault());
-  }
-
-  /**
-   * Render the tooltip based on what is currently hovered.
-   */
-  private renderTooltip(): React.ReactNode {
-    return <div className="tooltip" />;
   }
 
   /**
@@ -68,6 +76,27 @@ export class MapView extends React.Component<Props, {}> {
     } else {
       return [255, 255, 255, 40];
     }
+  }
+
+  private renderTooltip(feature: Feature): React.ReactNode {
+    const { tripData } = this.props;
+
+    let text = '';
+    if (feature && feature.properties) {
+      text = Math.round(tripData.get(feature.properties.id)).toString();
+    }
+
+    return (
+      <div
+        className="tooltip"
+        style={{
+          left: this.state.hoverX - 20,
+          top: this.state.hoverY - 20
+        }}
+      >
+        {text}
+      </div>
+    );
   }
 
   public render(): React.ReactNode {
@@ -109,6 +138,11 @@ export class MapView extends React.Component<Props, {}> {
               this.props.onClick(info.object.properties.id);
             },
             onHover: (info): void => {
+              this.setState({
+                hovered: info.object,
+                hoverX: info.x,
+                hoverY: info.y
+              });
               if (info.object) {
                 this.props.onHover(info.object.properties.id);
               } else {
@@ -161,7 +195,7 @@ export class MapView extends React.Component<Props, {}> {
           preventStyleDiffing={true}
           mapboxApiAccessToken={process.env.MAPBOX_TOKEN}
         />
-        {this.renderTooltip()}
+        {this.renderTooltip(this.state.hovered)}
       </DeckGL>
     );
   }
