@@ -1,20 +1,39 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat)](https://github.com/prettier/prettier)
 # Trip Cluster Tool
-Trip Cluster Tool is an exploratory web visualization of traffic flow in Edmonton, Alberta, Canada. This project is currently in development to become a general purpose traffic flow visualization tool.
+Trip Cluster Tool is An exploratory data visualization of traffic flow in the Edmonton Central Metropolitan Area.
+
+(Trip Cluster Tool is a web app built with [React](https://reactjs.org/), [deck.gl](https://deck.gl/#/), and [react-map-gl](https://uber.github.io/react-map-gl/#/))
 ## Supported Browsers
-All browsers except Internet Explorer are supported (there are no plans to support Internet Explorer)
-## Development
-### Install
+All browsers except Internet Explorer are supported
+## Setup
+### Requirements
+- [Node.js](https://nodejs.org/) >=12.0.0
+- [npm](https://www.npmjs.com/) >=6.0.0 (included with Node.js)
+### Install Dependencies
 ```
 npm install
 ```
-### Run
-#### Development Mode
-(The code is not minified and has access to source map tools and hot module replacement)
+### Set Environment Variables
+Create a ```.env``` file in the project root directory.
+Inside, add your [Mapbox API Access Token](https://docs.mapbox.com/help/how-mapbox-works/access-tokens/):
 ```
-npm run dev
+MAPBOX_TOKEN=...
 ```
-#### Production Mode
-(The code is minified and does not have access to source map tools or hot module replacement)
+## Build Locally
+Note: Code building/bundling is performed using [Webpack](https://webpack.js.org/)
+### Development Mode
+(The code is not minified and has access to [source map](https://webpack.js.org/configuration/devtool/) tools and [hot module replacement](https://webpack.js.org/concepts/hot-module-replacement/))
 ```
-npm run prod
+npm run build:dev
+```
+### Production Mode
+(The code is minified and does not have access to [source map](https://webpack.js.org/configuration/devtool/) tools or [hot module replacement](https://webpack.js.org/concepts/hot-module-replacement/))
+```
+npm run build:prod
+```
+## Run Locally
+Note: Setup must be completed and the code must be built in order to run
+```
+npm start
 ```
