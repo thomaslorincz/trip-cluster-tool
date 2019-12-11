@@ -35,12 +35,12 @@ export class ControlPanel extends React.Component<Props, {}> {
               entries: [
                 {
                   id: 'od',
-                  label: 'Origin to Destination',
+                  label: 'To Selected',
                   checked: flowDirection === FlowDirection.OToD
                 },
                 {
                   id: 'do',
-                  label: 'Destination to Origin',
+                  label: 'From Selected',
                   checked: flowDirection === FlowDirection.DToO
                 }
               ]
