@@ -12,15 +12,6 @@ import {
 import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-interface PurposeDatum {
-  home: number;
-  work: number;
-  school: number;
-  shop: number;
-  eat: number;
-  other: number;
-}
-
 interface TripDatum {
   // Origin-Destination Geographies
   originZone: number;
@@ -28,10 +19,8 @@ interface TripDatum {
   originDistrict: number;
   destDistrict: number;
 
-  // Mode and Purpose data
-  auto: PurposeDatum;
-  transit: PurposeDatum;
-  active: PurposeDatum;
+  // Trips by Mode, Purpose, and Time
+  trips: [number[][]];
 }
 
 interface AppState {
@@ -57,6 +46,7 @@ interface AppState {
   // Filter control entries
   modes: Map<string, boolean>; // Trip modes to use in calculations
   purposes: Map<string, boolean>; // Trip purposes to use in calculations
+  times: Map<string, boolean>;
 }
 
 /**
@@ -65,7 +55,7 @@ interface AppState {
  */
 export class App extends React.Component<{}, AppState> {
   /* The total OD data */
-  private totalData: TripDatum[] = [];
+  private totalData: TripDatum[];
 
   /* GeoJSON boundary features */
   private districts: Feature[] = [];
@@ -100,59 +90,39 @@ export class App extends React.Component<{}, AppState> {
         ['shop', true],
         ['eat', true],
         ['other', true]
+      ]),
+      times: new Map<string, boolean>([
+        ['early', true],
+        ['amRush', true],
+        ['midday', true],
+        ['pmRush', true],
+        ['evening', true],
+        ['overnight', true]
       ])
     };
 
     // Load all required data files and add their contents to the AppState
     Promise.all([
-      d3.csv('./od.csv'),
+      d3.json('./od.json'),
       d3.json('./districts.json'),
       d3.json('./zones.json')
-    ]).then(
-      ([odData, districts, zones]: [{}[], Feature[], Feature[]]): void => {
-        // Map all parsed string values to integers
-        odData.forEach(value => {
-          const mapped: TripDatum = {} as TripDatum;
+    ]).then(([trips, districts, zones]): void => {
+      this.totalData = trips;
+      this.districts = districts;
+      this.zones = zones;
 
-          const geoProperties = [
-            'originZone',
-            'destZone',
-            'originDistrict',
-            'destDistrict'
-          ];
+      this.setState({ loading: false });
 
-          for (const property in value) {
-            if (!Object.hasOwnProperty.call(value, property)) continue;
-
-            if (geoProperties.includes(property)) {
-              mapped[property] = parseInt(value[property]);
-            } else {
-              const [mode, purpose] = property.split('_');
-              if (!(mode in mapped)) {
-                mapped[mode] = {} as PurposeDatum;
-              }
-
-              mapped[mode][purpose] = parseInt(value[property]);
-            }
-          }
-          this.totalData.push(mapped);
-        });
-
-        this.districts = districts;
-        this.zones = zones;
-
-        this.setState({ loading: false });
-
-        this.updateData(
-          this.state.selected,
-          this.state.flowDirection,
-          this.state.metric,
-          this.state.geographyType,
-          new Map(this.state.modes),
-          new Map(this.state.purposes)
-        );
-      }
-    );
+      this.updateData(
+        this.state.selected,
+        this.state.flowDirection,
+        this.state.metric,
+        this.state.geographyType,
+        new Map(this.state.modes),
+        new Map(this.state.purposes),
+        new Map(this.state.times)
+      );
+    });
   }
 
   /**
@@ -166,7 +136,8 @@ export class App extends React.Component<{}, AppState> {
     metric: Metric,
     geographyType: GeographyType,
     modes: Map<string, boolean>,
-    purposes: Map<string, boolean>
+    purposes: Map<string, boolean>,
+    times: Map<string, boolean>
   ): void {
     let geographies = this.districts;
     let originField = 'originDistrict';
@@ -207,23 +178,23 @@ export class App extends React.Component<{}, AppState> {
       }
 
       // Create a list of all checked entries for each filter
-      const checkedModes = [];
-      modes.forEach((checked: boolean, mode: string) => {
-        if (checked) checkedModes.push(mode);
-      });
-      const checkedPurposes = [];
-      purposes.forEach((checked: boolean, purpose: string) => {
-        if (checked) checkedPurposes.push(purpose);
-      });
+      const modeFilter = Array.from(modes.values());
+      const purposeFilter = Array.from(purposes.values());
+      const timeFilter = Array.from(times.values());
 
       selectedData.forEach((datum: TripDatum) => {
         let addend = 0;
 
-        for (const mode of checkedModes) {
-          for (const purpose of checkedPurposes) {
-            addend += datum[mode][purpose];
-          }
-        }
+        modeFilter.forEach((modeChecked: boolean, i) => {
+          if (!modeChecked) return;
+          purposeFilter.forEach((purposeChecked: boolean, j) => {
+            if (!purposeChecked) return;
+            timeFilter.forEach((timeChecked: boolean, k) => {
+              if (!timeChecked) return;
+              addend += datum.trips[i][j][k];
+            });
+          });
+        });
 
         // If metric is density, divide trip volume with feature area
         if (metric === Metric.Density) {
@@ -265,7 +236,8 @@ export class App extends React.Component<{}, AppState> {
       this.state.metric,
       this.state.geographyType,
       new Map(this.state.modes),
-      new Map(this.state.purposes)
+      new Map(this.state.purposes),
+      new Map(this.state.times)
     );
   }
 
@@ -286,7 +258,8 @@ export class App extends React.Component<{}, AppState> {
       this.state.metric,
       this.state.geographyType,
       new Map(this.state.modes),
-      new Map(this.state.purposes)
+      new Map(this.state.purposes),
+      new Map(this.state.times)
     );
   }
 
@@ -306,7 +279,8 @@ export class App extends React.Component<{}, AppState> {
       metric,
       this.state.geographyType,
       new Map(this.state.modes),
-      new Map(this.state.purposes)
+      new Map(this.state.purposes),
+      new Map(this.state.times)
     );
   }
 
@@ -325,7 +299,8 @@ export class App extends React.Component<{}, AppState> {
       this.state.metric,
       type,
       new Map(this.state.modes),
-      new Map(this.state.purposes)
+      new Map(this.state.purposes),
+      new Map(this.state.times)
     );
   }
 
@@ -343,7 +318,8 @@ export class App extends React.Component<{}, AppState> {
       this.state.metric,
       this.state.geographyType,
       cloned,
-      new Map(this.state.purposes)
+      new Map(this.state.purposes),
+      new Map(this.state.times)
     );
   }
 
@@ -362,6 +338,26 @@ export class App extends React.Component<{}, AppState> {
       this.state.metric,
       this.state.geographyType,
       new Map(this.state.modes),
+      cloned,
+      new Map(this.state.times)
+    );
+  }
+
+  /**
+   * Clones the times Map, updates its contents, and recalculates the map data.
+   * @param time {string} The time entry to toggle.
+   */
+  private updateTimesFilter(time: string): void {
+    const cloned = new Map<string, boolean>(this.state.times);
+    cloned.set(time, !cloned.get(time));
+    this.setState({ times: cloned });
+    this.updateData(
+      this.state.selected,
+      this.state.flowDirection,
+      this.state.metric,
+      this.state.geographyType,
+      new Map(this.state.modes),
+      new Map(this.state.purposes),
       cloned
     );
   }
@@ -392,6 +388,8 @@ export class App extends React.Component<{}, AppState> {
         this.updateModesFilter(entry as string);
       } else if (section === 'purpose') {
         this.updatePurposesFilter(entry as string);
+      } else if (section === 'time') {
+        this.updateTimesFilter(entry as string);
       }
     }
   }
@@ -441,6 +439,7 @@ export class App extends React.Component<{}, AppState> {
           geographyType={this.state.geographyType}
           modes={this.state.modes}
           purposes={this.state.purposes}
+          times={this.state.times}
           onEntryClicked={(
             control: string,
             section: string,
