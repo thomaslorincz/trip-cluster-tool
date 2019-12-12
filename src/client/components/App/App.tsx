@@ -5,6 +5,7 @@ import './App.css';
 import { MapView, Feature } from '../MapView/MapView';
 import { ControlPanel } from '../ControlPanel/ControlPanel';
 import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 export enum FlowDirection {
   OToD, // Origin to Destination
@@ -53,6 +54,11 @@ interface AppState {
   minValue: number; // Minimum of tripData
   maxValue: number; // Maximum of tripData
 
+  // Tooltip
+  tooltipText: string;
+  hoverX: number; // Tooltip x-coordinate
+  hoverY: number; // Tooltip y-coordinate
+
   // Data control entries
   flowDirection: FlowDirection; // O -> D or D -> O
   metric: Metric; // Whether to calculate trip volume or density
@@ -83,11 +89,14 @@ export class App extends React.Component<{}, AppState> {
       loading: true,
       selected: null,
       hovered: null,
-      metric: Metric.Volume,
-      flowDirection: FlowDirection.OToD,
       tripData: new Map<number, number>(),
       minValue: 0,
       maxValue: 0,
+      tooltipText: '',
+      hoverX: 0,
+      hoverY: 0,
+      metric: Metric.Volume,
+      flowDirection: FlowDirection.OToD,
       geographyType: GeographyType.District,
       modes: new Map<string, boolean>([
         ['auto', true],
@@ -189,6 +198,8 @@ export class App extends React.Component<{}, AppState> {
     let minValue = Number.MAX_SAFE_INTEGER;
     let maxValue = 0;
 
+    let text = '';
+
     if (selected !== null) {
       let selectedField = destField;
       if (flowDirection === FlowDirection.DToO) {
@@ -236,9 +247,12 @@ export class App extends React.Component<{}, AppState> {
         minValue = Math.min(minValue, volume);
         maxValue = Math.max(maxValue, volume);
       });
+
+      const selectedValue = tripData.get(selected);
+      text = Math.round(selectedValue).toString();
     }
 
-    this.setState({ tripData, minValue, maxValue });
+    this.setState({ tripData, minValue, maxValue, tooltipText: text });
   }
 
   /**
@@ -429,6 +443,27 @@ export class App extends React.Component<{}, AppState> {
     }
   }
 
+  /**
+   * Handle hover interactions on the map.
+   * @param hovered {Feature} The map feature that is hovered.
+   * @param x {number} The x-coordinate of the mouse hover.
+   * @param y {number} The y-coordinate of the mouse hover.
+   */
+  private handleMapHover(hovered: Feature, x: number, y: number): void {
+    let id = null;
+    let text = '';
+    if (hovered && hovered.properties) {
+      id = hovered.properties.id;
+
+      if (this.state.selected) {
+        const value = this.state.tripData.get(id);
+        text = Math.round(value).toString();
+      }
+    }
+
+    this.setState({ hovered: id, tooltipText: text, hoverX: x, hoverY: y });
+  }
+
   public render(): React.ReactNode {
     return (
       <div className="app">
@@ -444,7 +479,7 @@ export class App extends React.Component<{}, AppState> {
           minValue={this.state.minValue}
           maxValue={this.state.maxValue}
           onClick={(id): void => this.updateSelected(id)}
-          onHover={(id): void => this.setState({ hovered: id })}
+          onHover={(f, x, y): void => this.handleMapHover(f, x, y)}
           cursor={this.state.hovered ? 'pointer' : 'grab'}
         />
         <ControlPanel
@@ -460,6 +495,11 @@ export class App extends React.Component<{}, AppState> {
           ): void => {
             this.handleEntryClicked(control, section, entry);
           }}
+        />
+        <Tooltip
+          text={this.state.tooltipText}
+          x={this.state.hoverX}
+          y={this.state.hoverY}
         />
         <LoadingScreen loading={this.state.loading} />
       </div>
