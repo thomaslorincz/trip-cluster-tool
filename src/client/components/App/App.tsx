@@ -75,8 +75,8 @@ export class App extends React.Component<{}, AppState> {
       tooltipText: '',
       hoverX: 0,
       hoverY: 0,
-      metric: Metric.Volume,
       flowDirection: FlowDirection.OToD,
+      metric: Metric.Volume,
       geographyType: GeographyType.District,
       modes: new Map<string, boolean>([
         ['auto', true],
@@ -150,10 +150,10 @@ export class App extends React.Component<{}, AppState> {
     }
 
     const tripData = new Map<number, number>();
-    const idToFeature = new Map<number, Feature>();
+    const idToArea = new Map<number, number>();
     geographies.forEach((feature: Feature) => {
       tripData.set(feature.properties.id, 0);
-      idToFeature.set(feature.properties.id, feature);
+      idToArea.set(feature.properties.id, feature.properties.area);
     });
 
     let minValue = Number.MAX_SAFE_INTEGER;
@@ -168,9 +168,9 @@ export class App extends React.Component<{}, AppState> {
       }
 
       // Filter data based on which geography is selected
-      const selectedData = this.totalData.filter(
-        (d: TripDatum) => d[selectedField] === selected
-      );
+      const selectedData = this.totalData.filter((d: TripDatum) => {
+        return d[selectedField] === selected;
+      });
 
       let sumField = originField;
       if (flowDirection === FlowDirection.DToO) {
@@ -198,7 +198,7 @@ export class App extends React.Component<{}, AppState> {
 
         // If metric is density, divide trip volume with feature area
         if (metric === Metric.Density) {
-          addend /= idToFeature.get(datum[sumField]).properties.area;
+          addend /= idToArea.get(datum[sumField]);
         }
 
         tripData.set(datum[sumField], tripData.get(datum[sumField]) + addend);
@@ -224,11 +224,7 @@ export class App extends React.Component<{}, AppState> {
    * @param id {number} The ID of the geography to select.
    */
   private updateSelected(id: number): void {
-    let selected = id;
-    if (this.state.selected === id) {
-      selected = null;
-    }
-
+    const selected = this.state.selected === id ? null : id;
     this.setState({ selected });
     this.updateData(
       selected,
