@@ -3,24 +3,14 @@ import * as d3 from 'd3-fetch';
 import './App.css';
 
 import { MapView, Feature } from '../MapView/MapView';
-import { ControlPanel } from '../ControlPanel/ControlPanel';
+import {
+  ControlPanel,
+  FlowDirection,
+  Metric,
+  GeographyType
+} from '../ControlPanel/ControlPanel';
 import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
 import { Tooltip } from '../Tooltip/Tooltip';
-
-export enum FlowDirection {
-  OToD, // Origin to Destination
-  DToO // Destination to Origin
-}
-
-export enum Metric {
-  Volume,
-  Density
-}
-
-export enum GeographyType {
-  District,
-  Zone
-}
 
 interface PurposeDatum {
   home: number;
@@ -31,7 +21,7 @@ interface PurposeDatum {
   other: number;
 }
 
-interface ODDatum {
+interface TripDatum {
   // Origin-Destination Geographies
   originZone: number;
   destZone: number;
@@ -75,7 +65,7 @@ interface AppState {
  */
 export class App extends React.Component<{}, AppState> {
   /* The total OD data */
-  private totalData: ODDatum[] = [];
+  private totalData: TripDatum[] = [];
 
   /* GeoJSON boundary features */
   private districts: Feature[] = [];
@@ -122,7 +112,7 @@ export class App extends React.Component<{}, AppState> {
       ([odData, districts, zones]: [{}[], Feature[], Feature[]]): void => {
         // Map all parsed string values to integers
         odData.forEach(value => {
-          const mapped: ODDatum = {} as ODDatum;
+          const mapped: TripDatum = {} as TripDatum;
 
           const geoProperties = [
             'originZone',
@@ -207,8 +197,8 @@ export class App extends React.Component<{}, AppState> {
       }
 
       // Filter data based on which geography is selected
-      const odData = this.totalData.filter(
-        (d: ODDatum) => d[selectedField] === selected
+      const selectedData = this.totalData.filter(
+        (d: TripDatum) => d[selectedField] === selected
       );
 
       let sumField = originField;
@@ -226,7 +216,7 @@ export class App extends React.Component<{}, AppState> {
         if (checked) checkedPurposes.push(purpose);
       });
 
-      odData.forEach((datum: ODDatum) => {
+      selectedData.forEach((datum: TripDatum) => {
         let addend = 0;
 
         for (const mode of checkedModes) {
@@ -248,8 +238,10 @@ export class App extends React.Component<{}, AppState> {
         maxValue = Math.max(maxValue, volume);
       });
 
-      const selectedValue = tripData.get(selected);
-      text = Math.round(selectedValue).toString();
+      if (this.state.hovered) {
+        const selectedValue = tripData.get(selected);
+        text = Math.round(selectedValue).toString();
+      }
     }
 
     this.setState({ tripData, minValue, maxValue, tooltipText: text });
@@ -261,119 +253,80 @@ export class App extends React.Component<{}, AppState> {
    * @param id {number} The ID of the geography to select.
    */
   private updateSelected(id: number): void {
+    let selected = id;
     if (this.state.selected === id) {
-      this.setState({ selected: null });
-      this.updateData(
-        null,
-        this.state.flowDirection,
-        this.state.metric,
-        this.state.geographyType,
-        new Map(this.state.modes),
-        new Map(this.state.purposes)
-      );
-    } else {
-      this.setState({ selected: id });
-      this.updateData(
-        id,
-        this.state.flowDirection,
-        this.state.metric,
-        this.state.geographyType,
-        new Map(this.state.modes),
-        new Map(this.state.purposes)
-      );
+      selected = null;
     }
+
+    this.setState({ selected });
+    this.updateData(
+      selected,
+      this.state.flowDirection,
+      this.state.metric,
+      this.state.geographyType,
+      new Map(this.state.modes),
+      new Map(this.state.purposes)
+    );
   }
 
   /**
    * Update the flow direction to use in calculations. The selected geography is
    * considered the destination when direction is O to D and the origin when
    * direction is D to O.
-   * @param direction {string} The flow direction to use for calculations.
+   * @param direction {FlowDirection} The flow direction to use for
+   *     calculations.
    */
-  private updateFlowDirection(direction: string): void {
-    if (direction === 'od') {
-      this.setState({ flowDirection: FlowDirection.OToD });
-      this.updateData(
-        this.state.selected,
-        FlowDirection.OToD,
-        this.state.metric,
-        this.state.geographyType,
-        new Map(this.state.modes),
-        new Map(this.state.purposes)
-      );
-    } else if (direction === 'do') {
-      this.setState({ flowDirection: FlowDirection.DToO });
-      this.updateData(
-        this.state.selected,
-        FlowDirection.DToO,
-        this.state.metric,
-        this.state.geographyType,
-        new Map(this.state.modes),
-        new Map(this.state.purposes)
-      );
-    }
+  private updateFlowDirection(direction: FlowDirection): void {
+    if (this.state.flowDirection === direction) return;
+
+    this.setState({ flowDirection: direction });
+    this.updateData(
+      this.state.selected,
+      direction,
+      this.state.metric,
+      this.state.geographyType,
+      new Map(this.state.modes),
+      new Map(this.state.purposes)
+    );
   }
 
   /**
    * Update the data metric to use in calculations. Volume is the count of trips
    * to/from a geography and density is the count of trips divided by the area
    * of the geography (in square km).
-   * @param metric {string} The type of metric to use for calculations.
+   * @param metric {Metric} The type of metric to use for calculations.
    */
-  private updateDataMetric(metric: string): void {
-    if (metric === 'volume') {
-      this.setState({ metric: Metric.Volume });
-      this.updateData(
-        this.state.selected,
-        this.state.flowDirection,
-        Metric.Volume,
-        this.state.geographyType,
-        new Map(this.state.modes),
-        new Map(this.state.purposes)
-      );
-    } else if (metric === 'density') {
-      this.setState({ metric: Metric.Density });
-      this.updateData(
-        this.state.selected,
-        this.state.flowDirection,
-        Metric.Density,
-        this.state.geographyType,
-        new Map(this.state.modes),
-        new Map(this.state.purposes)
-      );
-    }
+  private updateDataMetric(metric: Metric): void {
+    if (this.state.metric === metric) return;
+
+    this.setState({ metric });
+    this.updateData(
+      this.state.selected,
+      this.state.flowDirection,
+      metric,
+      this.state.geographyType,
+      new Map(this.state.modes),
+      new Map(this.state.purposes)
+    );
   }
 
   /**
    * Update the geography type to use in calculations. Districts are larger
    * boundaries than zones. Each zone belongs to exactly one district.
-   * @param type {string} The type of geography to use for calculations.
+   * @param type {GeographyType} The type of geography to use for calculations.
    */
-  private updateGeographyType(type: string): void {
-    // Clear current selection
-    this.setState({ selected: null });
+  private updateGeographyType(type: GeographyType): void {
+    if (this.state.geographyType === type) return;
 
-    if (type === 'district') {
-      this.setState({ geographyType: GeographyType.District });
-      this.updateData(
-        null,
-        this.state.flowDirection,
-        this.state.metric,
-        GeographyType.District,
-        new Map(this.state.modes),
-        new Map(this.state.purposes)
-      );
-    } else if (type === 'zone') {
-      this.setState({ geographyType: GeographyType.Zone });
-      this.updateData(
-        null,
-        this.state.flowDirection,
-        this.state.metric,
-        GeographyType.Zone,
-        new Map(this.state.modes),
-        new Map(this.state.purposes)
-      );
-    }
+    this.setState({ selected: null, geographyType: type });
+    this.updateData(
+      null,
+      this.state.flowDirection,
+      this.state.metric,
+      type,
+      new Map(this.state.modes),
+      new Map(this.state.purposes)
+    );
   }
 
   /**
@@ -418,27 +371,27 @@ export class App extends React.Component<{}, AppState> {
    * @param control {string} The type of control that was clicked.
    * @param section {string} The type of section within the control that was
    *     clicked.
-   * @param entry {string} The ID of the entry within the section that was
-   *     clicked.
+   * @param entry {string | number} The ID of the entry within the section that
+   *     was clicked.
    */
   private handleEntryClicked(
     control: string,
     section: string,
-    entry: string
+    entry: string | number
   ): void {
     if (control === 'data') {
       if (section === 'flow') {
-        this.updateFlowDirection(entry);
+        this.updateFlowDirection(entry as FlowDirection);
       } else if (section === 'metric') {
-        this.updateDataMetric(entry);
+        this.updateDataMetric(entry as Metric);
       } else if (section === 'geography') {
-        this.updateGeographyType(entry);
+        this.updateGeographyType(entry as GeographyType);
       }
     } else if (control === 'filter') {
       if (section === 'mode') {
-        this.updateModesFilter(entry);
+        this.updateModesFilter(entry as string);
       } else if (section === 'purpose') {
-        this.updatePurposesFilter(entry);
+        this.updatePurposesFilter(entry as string);
       }
     }
   }

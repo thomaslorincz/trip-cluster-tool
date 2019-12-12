@@ -2,7 +2,21 @@ import * as React from 'react';
 import './ControlPanel.css';
 
 import { Control, SectionType } from './Control/Control';
-import { FlowDirection, GeographyType, Metric } from '../App/App';
+
+export enum FlowDirection {
+  OToD, // Origin to Destination (Selected is Destination)
+  DToO // Destination to Origin (Selected is Origin)
+}
+
+export enum Metric {
+  Volume,
+  Density
+}
+
+export enum GeographyType {
+  District,
+  Zone
+}
 
 interface Props {
   flowDirection: FlowDirection;
@@ -34,12 +48,12 @@ export class ControlPanel extends React.Component<Props, {}> {
               type: SectionType.Radio,
               entries: [
                 {
-                  id: 'od',
+                  id: FlowDirection.OToD,
                   label: 'To Selected',
                   checked: flowDirection === FlowDirection.OToD
                 },
                 {
-                  id: 'do',
+                  id: FlowDirection.DToO,
                   label: 'From Selected',
                   checked: flowDirection === FlowDirection.DToO
                 }
@@ -51,12 +65,12 @@ export class ControlPanel extends React.Component<Props, {}> {
               type: SectionType.Radio,
               entries: [
                 {
-                  id: 'volume',
+                  id: Metric.Volume,
                   label: 'Trip Volume [trips]',
                   checked: metric === Metric.Volume
                 },
                 {
-                  id: 'density',
+                  id: Metric.Density,
                   label: 'Trip Density [trips/km²]',
                   checked: metric === Metric.Density
                 }
@@ -68,12 +82,12 @@ export class ControlPanel extends React.Component<Props, {}> {
               type: SectionType.Radio,
               entries: [
                 {
-                  id: 'district',
+                  id: GeographyType.District,
                   label: 'Districts',
                   checked: geographyType === GeographyType.District
                 },
                 {
-                  id: 'zone',
+                  id: GeographyType.Zone,
                   label: 'Zones',
                   checked: geographyType === GeographyType.Zone
                 }

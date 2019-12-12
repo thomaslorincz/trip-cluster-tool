@@ -2,7 +2,7 @@ import * as React from 'react';
 import './Control.css';
 
 interface Entry {
-  id: string;
+  id: string | number;
   label: string;
   checked: boolean;
 }
