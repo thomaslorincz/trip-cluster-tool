@@ -46,7 +46,7 @@ export class MapView extends React.Component<Props, {}> {
    * Convert trip volume to choropleth colour.
    * @param volume {number} The number of trips to/from (depending on flow
    *     direction) the selected geography.
-   * @param min {number} The minimum (nonzero) trip volume to use in scaling.
+   * @param min {number} The minimum trip volume to use in scaling.
    * @param max {number} The maximum trip volume to use in scaling.
    */
   private volumeToColour(volume: number, min: number, max: number): number[] {
