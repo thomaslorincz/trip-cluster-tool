@@ -77,7 +77,7 @@ export class MapView extends React.Component<Props, {}> {
     } = this.props;
 
     return (
-      <React.Fragment>
+      <div className="map">
         <DeckGL
           layers={[
             new GeoJsonLayer({
@@ -158,7 +158,7 @@ export class MapView extends React.Component<Props, {}> {
             mapboxApiAccessToken={process.env.MAPBOX_TOKEN}
           />
         </DeckGL>
-      </React.Fragment>
+      </div>
     );
   }
 }
