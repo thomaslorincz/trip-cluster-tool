@@ -3,9 +3,11 @@
 # Trip Cluster Tool
 Trip Cluster Tool is an exploratory data visualization of traffic flow in the Edmonton Central Metropolitan Area.
 
-https://trip-cluster-tool.herokuapp.com (all modern browsers except Internet Explorer are supported)
-
 (Trip Cluster Tool is a web app built with [React](https://reactjs.org/), [deck.gl](https://deck.gl/#/), and [react-map-gl](https://uber.github.io/react-map-gl/#/))
+## Website
+https://trip-cluster-tool.herokuapp.com
+
+Note: All modern browsers except Internet Explorer are supported
 ## Development
 ### Setup
 #### Requirements
