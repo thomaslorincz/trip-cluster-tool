@@ -350,6 +350,7 @@ export class App extends React.Component<{}, AppState> {
   private updateTimesFilter(time: string): void {
     const cloned = new Map<string, boolean>(this.state.times);
     cloned.set(time, !cloned.get(time));
+    this.setState({ times: cloned });
     this.updateData(
       this.state.selected,
       this.state.flowDirection,
@@ -438,6 +439,7 @@ export class App extends React.Component<{}, AppState> {
           geographyType={this.state.geographyType}
           modes={this.state.modes}
           purposes={this.state.purposes}
+          times={this.state.times}
           onEntryClicked={(
             control: string,
             section: string,

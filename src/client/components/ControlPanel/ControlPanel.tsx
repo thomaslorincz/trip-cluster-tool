@@ -24,6 +24,7 @@ interface Props {
   geographyType: GeographyType;
   modes: Map<string, boolean>;
   purposes: Map<string, boolean>;
+  times: Map<string, boolean>;
   onEntryClicked: Function;
 }
 
@@ -34,7 +35,8 @@ export class ControlPanel extends React.Component<Props, {}> {
       metric,
       geographyType,
       modes,
-      purposes
+      purposes,
+      times
     } = this.props;
 
     return (
@@ -133,6 +135,43 @@ export class ControlPanel extends React.Component<Props, {}> {
                   id: 'other',
                   label: 'Other',
                   checked: purposes.get('other')
+                }
+              ]
+            },
+            {
+              id: 'time',
+              label: 'Time of Day',
+              type: SectionType.Checkbox,
+              entries: [
+                {
+                  id: 'early',
+                  label: 'Early     (04:00-06:00)',
+                  checked: times.get('early')
+                },
+                {
+                  id: 'amRush',
+                  label: 'AM Rush   (06:00-09:00)',
+                  checked: times.get('amRush')
+                },
+                {
+                  id: 'midday',
+                  label: 'Midday    (09:00-15:30)',
+                  checked: times.get('midday')
+                },
+                {
+                  id: 'pmRush',
+                  label: 'PM Rush   (15:30-18:30)',
+                  checked: times.get('pmRush')
+                },
+                {
+                  id: 'evening',
+                  label: 'Evening   (18:30-22:00)',
+                  checked: times.get('evening')
+                },
+                {
+                  id: 'overnight',
+                  label: 'Overnight (22:00-04:00)',
+                  checked: times.get('overnight')
                 }
               ]
             }

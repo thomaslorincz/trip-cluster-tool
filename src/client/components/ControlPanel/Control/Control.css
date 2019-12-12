@@ -68,6 +68,7 @@
     color: var(--text-secondary-color);
     font-family: var(--font-value-text);
     user-select: none;
+    white-space: pre;
 }
 
 .control-entry:hover {
