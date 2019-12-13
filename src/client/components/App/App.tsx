@@ -3,14 +3,17 @@ import * as d3 from 'd3-fetch';
 import './App.css';
 
 import { MapView, Feature } from '../MapView/MapView';
+import { ControlPanel } from '../ControlPanel/ControlPanel';
+import { LegendControl } from '../ControlPanel/LegendControl/LegendControl';
 import {
-  ControlPanel,
+  DataControl,
   FlowDirection,
   Metric,
   GeographyType
-} from '../ControlPanel/ControlPanel';
-import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
+} from '../ControlPanel/DataControl/DataControl';
+import { FilterControl } from '../ControlPanel/FilterControl/FilterControl';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
 
 interface TripDatum {
   // Origin-Destination Geographies
@@ -429,21 +432,29 @@ export class App extends React.Component<{}, AppState> {
           onHover={(f, x, y): void => this.handleMapHover(f, x, y)}
           cursor={this.state.hovered ? 'pointer' : 'grab'}
         />
-        <ControlPanel
-          flowDirection={this.state.flowDirection}
-          metric={this.state.metric}
-          geographyType={this.state.geographyType}
-          modes={this.state.modes}
-          purposes={this.state.purposes}
-          times={this.state.times}
-          onEntryClicked={(
-            control: string,
-            section: string,
-            entry: string
-          ): void => {
-            this.handleEntryClicked(control, section, entry);
-          }}
-        />
+        <ControlPanel>
+          <LegendControl
+            onEntryClicked={(section, entry): void => {
+              this.handleEntryClicked('legend', section, entry);
+            }}
+          />
+          <DataControl
+            flowDirection={this.state.flowDirection}
+            metric={this.state.metric}
+            geographyType={this.state.geographyType}
+            onEntryClicked={(section, entry): void => {
+              this.handleEntryClicked('data', section, entry);
+            }}
+          />
+          <FilterControl
+            modes={this.state.modes}
+            purposes={this.state.purposes}
+            times={this.state.times}
+            onEntryClicked={(section, entry): void => {
+              this.handleEntryClicked('filter', section, entry);
+            }}
+          />
+        </ControlPanel>
         <Tooltip
           text={this.state.tooltipText}
           x={this.state.hoverX}

@@ -21,17 +21,18 @@ interface Section {
 
 interface Props {
   type: string;
+  title: string;
   sections: Section[];
   onClick: Function;
 }
 
 export class Control extends React.Component<Props, {}> {
   public render(): React.ReactNode {
-    const { sections } = this.props;
+    const { type, title, sections } = this.props;
 
     return (
-      <div className={'control' + ` ${this.props.type}-control`}>
-        <div className="control-title">{this.props.type}</div>
+      <div className={'control' + ` ${type}-control`}>
+        <div className="control-title">{title}</div>
         {sections.map((section: Section) => {
           return (
             <div className="control-section" key={section.id}>
