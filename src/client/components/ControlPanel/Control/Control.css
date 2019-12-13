@@ -2,7 +2,7 @@
     display: flex;
     position: relative;
     flex-direction: column;
-    width: auto;
+    width: 240px;
     height: auto;
     background-color: var(--app-primary-color);
     border: 2px solid var(--app-secondary-color);

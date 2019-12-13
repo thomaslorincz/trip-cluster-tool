@@ -3,7 +3,6 @@ import * as d3 from 'd3-fetch';
 import './App.css';
 
 import { MapView, Feature } from '../MapView/MapView';
-import { ControlPanel } from '../ControlPanel/ControlPanel';
 import { LegendControl } from '../ControlPanel/LegendControl/LegendControl';
 import {
   DataControl,
@@ -432,7 +431,7 @@ export class App extends React.Component<{}, AppState> {
           onHover={(f, x, y): void => this.handleMapHover(f, x, y)}
           cursor={this.state.hovered ? 'pointer' : 'grab'}
         />
-        <ControlPanel>
+        <div className="control-panel">
           <LegendControl
             onEntryClicked={(section, entry): void => {
               this.handleEntryClicked('legend', section, entry);
@@ -454,7 +453,7 @@ export class App extends React.Component<{}, AppState> {
               this.handleEntryClicked('filter', section, entry);
             }}
           />
-        </ControlPanel>
+        </div>
         <Tooltip
           text={this.state.tooltipText}
           x={this.state.hoverX}
