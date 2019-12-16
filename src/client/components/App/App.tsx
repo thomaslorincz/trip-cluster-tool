@@ -2,12 +2,12 @@ import * as React from 'react';
 import * as d3 from 'd3-fetch';
 import './App.css';
 
-import { MapView, Feature } from '../MapView/MapView';
+import { Feature, MapView } from '../MapView/MapView';
 import {
   ControlPanel,
   FlowDirection,
-  Metric,
-  GeographyType
+  GeographyType,
+  Metric
 } from '../ControlPanel/ControlPanel';
 import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -159,8 +159,6 @@ export class App extends React.Component<{}, AppState> {
     let minValue = Number.MAX_SAFE_INTEGER;
     let maxValue = 0;
 
-    let text = '';
-
     if (selected !== null) {
       let selectedField = destField;
       if (flowDirection === FlowDirection.DToO) {
@@ -208,14 +206,17 @@ export class App extends React.Component<{}, AppState> {
         minValue = Math.min(minValue, volume);
         maxValue = Math.max(maxValue, volume);
       });
-
-      if (this.state.hovered) {
-        const selectedValue = tripData.get(selected);
-        text = Math.round(selectedValue).toString();
-      }
     }
 
-    this.setState({ tripData, minValue, maxValue, tooltipText: text });
+    const tooltipText = this.generateTooltipText(
+      selected,
+      tripData,
+      flowDirection,
+      metric,
+      geographyType
+    );
+
+    this.setState({ tripData, minValue, maxValue, tooltipText });
   }
 
   /**
@@ -401,14 +402,38 @@ export class App extends React.Component<{}, AppState> {
     let text = '';
     if (hovered && hovered.properties) {
       id = hovered.properties.id;
-
-      if (this.state.selected) {
-        const value = this.state.tripData.get(id);
-        text = Math.round(value).toString();
-      }
+      text = this.generateTooltipText(
+        id,
+        this.state.tripData,
+        this.state.flowDirection,
+        this.state.metric,
+        this.state.geographyType
+      );
     }
 
     this.setState({ hovered: id, tooltipText: text, hoverX: x, hoverY: y });
+  }
+
+  private generateTooltipText(
+    id: number,
+    tripData: Map<number, number>,
+    flowDirection: FlowDirection,
+    metric: Metric,
+    geographyType: GeographyType
+  ): string {
+    const geographyText =
+      geographyType === GeographyType.District ? 'District' : 'Zone';
+    const firstLine = `${geographyText} ${this.state.hovered}\n`;
+
+    const value = tripData.get(id);
+    const valueText = metric === Metric.Volume ? value : value.toFixed(2);
+    const metricText = metric === Metric.Volume ? 'trips' : 'trips/km²';
+    const secondLine = `${valueText} ${metricText} per day\n`;
+
+    const directionText = flowDirection === FlowDirection.OToD ? 'to' : 'from';
+    const thirdLine = `${directionText} selected`;
+
+    return `${firstLine}${secondLine}${thirdLine}`;
   }
 
   public render(): React.ReactNode {
@@ -445,6 +470,8 @@ export class App extends React.Component<{}, AppState> {
           }}
         />
         <Tooltip
+          selected={this.state.selected}
+          hovered={this.state.hovered}
           text={this.state.tooltipText}
           x={this.state.hoverX}
           y={this.state.hoverY}
