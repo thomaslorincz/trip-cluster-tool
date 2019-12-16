@@ -6,7 +6,9 @@
     pointer-events: none;
     font-family: var(--font-value-text);
     box-shadow: var(--app-element-shadow);
-    padding: 1px 4px;
+    padding: 1px 6px;
     border: 2px solid var(--app-secondary-color);
     border-radius: 4px;
+    white-space: pre;
+    text-align: center;
 }
