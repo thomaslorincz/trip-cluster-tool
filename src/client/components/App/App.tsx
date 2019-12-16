@@ -438,7 +438,7 @@ export class App extends React.Component<{}, AppState> {
 
   public render(): React.ReactNode {
     return (
-      <div className="app">
+      <React.Fragment>
         <MapView
           selected={this.state.selected}
           hovered={this.state.hovered}
@@ -477,7 +477,7 @@ export class App extends React.Component<{}, AppState> {
           y={this.state.hoverY}
         />
         <LoadingScreen loading={this.state.loading} />
-      </div>
+      </React.Fragment>
     );
   }
 }
