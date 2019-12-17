@@ -1,0 +1,15 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: GitHub Action for Heroku
+        uses: actions/heroku@1.0.0
+        env:
+          HEROKU_APP: trip-cluster-tool
