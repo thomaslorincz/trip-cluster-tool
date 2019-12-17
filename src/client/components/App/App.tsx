@@ -421,7 +421,8 @@ export class App extends React.Component<{}, AppState> {
     metric: Metric,
     geographyType: GeographyType
   ): string {
-    const hoverdirectionText = flowDirection === FlowDirection.OToD ? 'From' : 'To';
+    const hoverdirectionText =
+      flowDirection === FlowDirection.OToD ? 'From' : 'To';
     const geographyText =
       geographyType === GeographyType.District ? 'District' : 'Zone';
     const secondLine = `${hoverdirectionText} ${geographyText} ${this.state.hovered}: \n`;
