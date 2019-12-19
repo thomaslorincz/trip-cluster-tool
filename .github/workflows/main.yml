@@ -9,7 +9,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy
+      - uses: actions/checkout@v2
+      - name: Push and Release Container
         run: |
           heroku container:push web -a trip-cluster-tool
           heroku container:release web -a trip-cluster-tool
