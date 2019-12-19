@@ -44,3 +44,7 @@ Note: Setup must be completed and the code must be built in order to run
 ```
 npm start
 ```
+### Deploy
+Every push to the master branch will be deployed as part of a [continuous delivery](https://continuousdelivery.com/) workflow.
+
+Configuration for this process is found in ```.github/workflows/main.yml``` (using [GitHub Actions](https://help.github.com/en/actions/automating-your-workflow-with-github-actions)).
