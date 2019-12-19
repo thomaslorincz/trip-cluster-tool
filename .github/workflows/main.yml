@@ -11,9 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Push and Release Container
+        env:
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           touch .env
-          echo "MAPBOX_TOKEN=${{ secrets.MAPBOX_TOKEN }}" >> .env
-          docker login --username=tlorincz@ualberta.ca --password-stdin=${{ secrets.HEROKU_API_KEY }} registry.heroku.com
+          echo "MAPBOX_TOKEN=$MAPBOX_TOKEN" >> .env
+          docker login --username=tlorincz@ualberta.ca --password-stdin=$HEROKU_API_KEY registry.heroku.com
           heroku container:push web -a trip-cluster-tool
           heroku container:release web -a trip-cluster-tool
