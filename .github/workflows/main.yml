@@ -10,13 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set Environment Variables
+      - name: Push and Release Container
         run: |
           touch .env
           echo "MAPBOX_TOKEN=${{ secrets.MAPBOX_TOKEN }}" >> .env
-      - name: Docker Login
-        run: docker login --username=tlorincz@ualberta.ca --password=${{ secrets.HEROKU_API_KEY }} registry.heroku.com
-      - name: Push and Release Container
-        run: |
+          docker login --username=tlorincz@ualberta.ca --password=${{ secrets.HEROKU_API_KEY }} registry.heroku.com
           heroku container:push web -a trip-cluster-tool
           heroku container:release web -a trip-cluster-tool
