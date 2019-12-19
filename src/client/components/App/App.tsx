@@ -421,18 +421,17 @@ export class App extends React.Component<{}, AppState> {
     metric: Metric,
     geographyType: GeographyType
   ): string {
+    const hoverdirectionText =
+      flowDirection === FlowDirection.OToD ? 'From' : 'To';
     const geographyText =
       geographyType === GeographyType.District ? 'District' : 'Zone';
-    const firstLine = `${geographyText} ${this.state.hovered}\n`;
-
+    const secondLine = `${hoverdirectionText} ${geographyText} ${this.state.hovered}: \n`;
+    const directionText = flowDirection === FlowDirection.OToD ? 'To' : 'From';
+    const firstLine = `${directionText} ${geographyText} ${this.state.selected}\n`;
     const value = tripData.get(id);
     const valueText = metric === Metric.Volume ? value : value.toFixed(2);
     const metricText = metric === Metric.Volume ? 'trips' : 'trips/km²';
-    const secondLine = `${valueText} ${metricText} per day\n`;
-
-    const directionText = flowDirection === FlowDirection.OToD ? 'to' : 'from';
-    const thirdLine = `${directionText} selected`;
-
+    const thirdLine = `${valueText} ${metricText} daily\n`;
     return `${firstLine}${secondLine}${thirdLine}`;
   }
 

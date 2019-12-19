@@ -67,14 +67,14 @@ export class ControlPanel extends React.Component<Props, {}> {
               type: SectionType.Radio,
               entries: [
                 {
-                  id: Metric.Volume,
-                  label: 'Trip Volume [trips]',
-                  checked: metric === Metric.Volume
-                },
-                {
                   id: Metric.Density,
                   label: 'Trip Density [trips/km²]',
                   checked: metric === Metric.Density
+                },
+                {
+                  id: Metric.Volume,
+                  label: 'Trip Volume [trips]',
+                  checked: metric === Metric.Volume
                 }
               ]
             },
