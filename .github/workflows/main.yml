@@ -17,6 +17,6 @@ jobs:
         run: |
           touch .env
           echo "MAPBOX_TOKEN=$MAPBOX_TOKEN" >> .env
-          docker login --username=tlorincz@ualberta.ca --password-stdin=$HEROKU_API_KEY registry.heroku.com
+          docker login --username=tlorincz@ualberta.ca --password=$HEROKU_API_KEY registry.heroku.com
           heroku container:push web -a trip-cluster-tool
           heroku container:release web -a trip-cluster-tool
