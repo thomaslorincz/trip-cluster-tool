@@ -15,6 +15,9 @@ RUN npm run build:prod
 # Prune dev dependencies
 RUN npm prune --production
 
+# Install production process manager
+RUN npm install -g pm2
+
 EXPOSE 8080
 
-CMD ["node", "./dist/server.js"]
+CMD ["pm2-runtime", "ecosystem.config.js"]
